@@ -1,16 +1,14 @@
-package janstenpickle.vault
+package janstenpickle.vault.core
 
 import java.io.File
 import java.net.URL
-import java.security.KeyStore
 
 import akka.stream.Materializer
 import janstenpickle.scala.syntax.task._
 import janstenpickle.scala.syntax.wsresponse._
 import play.api.libs.json._
-import play.api.libs.ws.ssl.{KeyStoreConfig, KeyManagerConfig, SSLConfig}
-import play.api.libs.ws.{WSClientConfig, WSRequest}
-import play.api.libs.ws.ahc.{AhcWSClientConfig, AhcWSClient}
+import play.api.libs.ws.WSRequest
+import play.api.libs.ws.ahc.AhcWSClient
 
 import scala.concurrent.ExecutionContext
 import scalaz.concurrent.Task

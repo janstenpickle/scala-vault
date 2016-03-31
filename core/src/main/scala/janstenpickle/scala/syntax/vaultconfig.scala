@@ -1,6 +1,6 @@
 package janstenpickle.scala.syntax
 
-import janstenpickle.vault.VaultConfig
+import janstenpickle.vault.core.VaultConfig
 import play.api.libs.ws.{WSRequest, WSResponse}
 
 import scala.concurrent.ExecutionContext

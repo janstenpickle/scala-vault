@@ -1,4 +1,4 @@
-package janstenpickle.vault
+package janstenpickle.vault.core
 
 import janstenpickle.scala.syntax.task._
 import janstenpickle.scala.syntax.vaultconfig._

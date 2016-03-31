@@ -1,4 +1,4 @@
-package janstenpickle.vault
+package janstenpickle.vault.core
 
 import java.net.URL
 
@@ -7,6 +7,7 @@ import akka.stream.{ActorMaterializer, Materializer}
 import janstenpickle.scala.syntax.task._
 import janstenpickle.scala.syntax.vaultconfig._
 import janstenpickle.scala.syntax.wsresponse._
+import org.scalacheck.Gen
 import org.specs2.Specification
 import org.specs2.matcher.DisjunctionMatchers
 import org.specs2.specification.core.Fragments
@@ -23,8 +24,9 @@ trait VaultSpec extends Specification with DisjunctionMatchers {
   val appId = "nic"
   val userId = "cage"
 
-  lazy val rootConfig: VaultConfig = VaultConfig(WSClientWrapper(new URL("http://localhost:8200")),
-                                            Source.fromFile("/tmp/.vault-token").mkString.trim)
+  lazy val adminToken = Source.fromFile("/tmp/.vault-token").mkString.trim
+
+  lazy val rootConfig: VaultConfig = VaultConfig(WSClientWrapper(new URL("http://localhost:8200")), adminToken)
   lazy val config = VaultConfig(rootConfig.wsClient, AppId(appId, userId))
   lazy val badTokenConfig = VaultConfig(rootConfig.wsClient, "face-off")
   lazy val badServerConfig = VaultConfig(WSClientWrapper(new URL("http://nic-cage.xyz")), "con-air")
@@ -44,14 +46,14 @@ trait VaultSpec extends Specification with DisjunctionMatchers {
       unsafePerformSyncAttempt
   }
 
-  def teardown =
-    rootConfig.authenticatedRequest("sys/auth/app-id")(_.delete()).acceptStatusCodes(200, 204).unsafePerformSyncAttempt
-
   override def map(fs: => Fragments) =
     step(init) ^
     s2"""
       Can receive a token for an app ID ${config.token.unsafePerformSyncAttempt must be_\/-}
     """ ^
-    fs ^
-    step(teardown)
+    fs
+}
+
+object VaultSpec {
+  val strGen = Gen.alphaStr.suchThat(!_.isEmpty)
 }
