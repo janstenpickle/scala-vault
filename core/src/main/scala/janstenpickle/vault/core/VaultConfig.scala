@@ -2,13 +2,15 @@ package janstenpickle.vault.core
 
 import java.io.File
 import java.net.URL
+import java.security.KeyStore
 
 import akka.stream.Materializer
 import janstenpickle.scala.syntax.task._
 import janstenpickle.scala.syntax.wsresponse._
 import play.api.libs.json._
-import play.api.libs.ws.WSRequest
-import play.api.libs.ws.ahc.AhcWSClient
+import play.api.libs.ws.ssl.{KeyStoreConfig, KeyManagerConfig, SSLConfig}
+import play.api.libs.ws.{WSClientConfig, WSRequest}
+import play.api.libs.ws.ahc.{AhcWSClientConfig, AhcWSClient}
 
 import scala.concurrent.ExecutionContext
 import scalaz.concurrent.Task
@@ -42,23 +44,20 @@ case class WSClientWrapper(server: URL,
                            keyStoreFile: Option[File] = None,
                            keyStorePassword: Option[String] = None)(implicit materializer: Materializer) {
 
-  val wsClient: AhcWSClient = AhcWSClient()
-
-//    AhcWSClient(
-//    AhcWSClientConfig(
-//      wsClientConfig = WSClientConfig(
-//        ssl = SSLConfig(
-//          keyManagerConfig = KeyManagerConfig(
-//            keyStoreConfigs = Seq(
-//              KeyStoreConfig(storeType = keyStoreType.getOrElse(KeyStore.getDefaultType),
-//                             filePath = keyStoreFile.map(_.getAbsolutePath),
-//                             password = keyStorePassword)
-//            )
-//          )
-//        )
-//      )
-//    )
-//  )
+  val wsClient: AhcWSClient = AhcWSClient(
+    AhcWSClientConfig(
+      wsClientConfig = WSClientConfig(
+        ssl = SSLConfig(
+          keyManagerConfig = KeyManagerConfig(
+            keyStoreConfigs = keyStoreFile.map( ksFile =>
+              KeyStoreConfig(storeType = keyStoreType.getOrElse(KeyStore.getDefaultType),
+                             filePath = Some(ksFile.getAbsolutePath),
+                             password = keyStorePassword)).toSeq
+            )
+          )
+        )
+      )
+    )
 
   def path(p: String): WSRequest = wsClient.url(s"${server.toString}/$version/$p")
 }
