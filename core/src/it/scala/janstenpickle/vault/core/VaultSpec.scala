@@ -51,7 +51,11 @@ trait VaultSpec extends Specification with DisjunctionMatchers {
     s2"""
       Can receive a token for an app ID ${config.token.unsafePerformSyncAttempt must be_\/-}
     """ ^
-    fs
+    fs ^
+    step(config.wsClient.underlying.close()) ^
+    step(rootConfig.wsClient.underlying.close()) ^
+    step(badTokenConfig.wsClient.underlying.close()) ^
+    step(badServerConfig.wsClient.underlying.close())
 }
 
 object VaultSpec {

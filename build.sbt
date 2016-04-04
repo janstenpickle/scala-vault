@@ -29,4 +29,5 @@ lazy val commonSettings = Seq(
 ) ++ Defaults.itSettings
 
 lazy val core = (project in file("core")).settings(commonSettings: _*).configs(IntegrationTest)
-lazy val auth = (project in file("auth")).settings(commonSettings: _*).configs(IntegrationTest).dependsOn(core % "compile->compile;it->it")
+lazy val auth = (project in file("auth")).settings(commonSettings: _*).configs(IntegrationTest).dependsOn(core % "compile->compile;it->it", manage % "it->compile")
+lazy val manage = (project in file("manage")).settings(commonSettings: _*).configs(IntegrationTest).dependsOn(core % "compile->compile;it->it")

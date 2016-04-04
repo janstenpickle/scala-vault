@@ -44,7 +44,7 @@ case class WSClientWrapper(server: URL,
                            keyStoreFile: Option[File] = None,
                            keyStorePassword: Option[String] = None)(implicit materializer: Materializer) {
 
-  val wsClient: AhcWSClient = AhcWSClient(
+  val underlying: AhcWSClient = AhcWSClient(
     AhcWSClientConfig(
       wsClientConfig = WSClientConfig(
         ssl = SSLConfig(
@@ -59,7 +59,7 @@ case class WSClientWrapper(server: URL,
       )
     )
 
-  def path(p: String): WSRequest = wsClient.url(s"${server.toString}/$version/$p")
+  def path(p: String): WSRequest = underlying.url(s"${server.toString}/$version/$p")
 }
 
 

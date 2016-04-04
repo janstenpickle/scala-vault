@@ -30,7 +30,8 @@ case class TokenResponse(id: String,
                          ttl: Int) {
   import TokenResponse._
 
-  lazy val clientId: Option[String] = Try(path.split(Separator)(1)).toOption
+  lazy val client: Option[String] =
+    meta.flatMap(_.get("client")).fold(Try(path.split(Separator)(1)).toOption)(Some(_))
   lazy val username: Option[String] = meta.flatMap(_.get("username"))
 }
 
