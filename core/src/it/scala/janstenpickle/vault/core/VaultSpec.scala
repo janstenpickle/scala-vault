@@ -59,5 +59,6 @@ trait VaultSpec extends Specification with DisjunctionMatchers {
 }
 
 object VaultSpec {
+  val longerStrGen = Gen.alphaStr.suchThat(_.length >= 3)
   val strGen = Gen.alphaStr.suchThat(!_.isEmpty)
 }

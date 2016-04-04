@@ -64,13 +64,14 @@ class TokenIT extends VaultSpec with ScalaCheck {
 }
 
 object TokenIT {
+  import VaultSpec._
+
   val clientId = "nic-cage"
 
   case class User(username: String, password: String, ttl: String, max_ttl: String) {
     def getTtl: Int = ttl.dropRight(1).toInt
   }
 
-  val longerStrGen = Gen.alphaStr.suchThat(_.length >= 3)
   val usernameGen = for {
     clientId <- longerStrGen
     username <- longerStrGen
