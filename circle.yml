@@ -19,9 +19,11 @@ dependencies:
     - echo 'listener "tcp" { address = "0.0.0.0:9000" tls_disable = 1 }' > /tmp/vault.conf
     - "docker run -d --expose 9000 -p 127.0.0.1:8200:9000 -v /tmp/vault.conf:/root/vault.conf -v /tmp/.vault-token:/root/.vault-token cgswong/vault:latest server -config /root/vault.conf -dev"
   override:
+    - cat /dev/null | sbt test:compile
     - cat /dev/null | sbt it:compile
 test:
   override:
+    - cat /dev/null | sbt test
     - cat /dev/null | sbt it:test
   post:
     - mkdir -p $CIRCLE_TEST_REPORTS/junit/
