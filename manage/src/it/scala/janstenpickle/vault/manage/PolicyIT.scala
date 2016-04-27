@@ -29,6 +29,7 @@ class PolicyIT extends VaultSpec with ScalaCheck {
     (underTest.delete(name.toLowerCase).unsafePerformSyncAttempt must be_\/-)
   }
 
+  // cannot use generated values here as vault seems to have a failure rate limit
   def sad = underTest.set("nic", List(Rule("cage", Some(List("kim", "copolla"))))).unsafePerformSyncAttempt must be_-\/
 }
 
