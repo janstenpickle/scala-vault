@@ -1,13 +1,10 @@
 package janstenpickle.vault.auth
 
-import janstenpickle.scala.syntax.task._
-import janstenpickle.scala.syntax.vaultconfig._
-import janstenpickle.scala.syntax.wsresponse._
 import janstenpickle.vault.core.VaultSpec
+import janstenpickle.vault.manage.Auth
 import org.scalacheck.{Gen, Prop}
 import org.specs2.ScalaCheck
 import org.specs2.matcher.MatchResult
-import play.api.libs.json.Json
 
 class UserPassIT extends VaultSpec with ScalaCheck {
   import VaultSpec._
@@ -22,21 +19,16 @@ class UserPassIT extends VaultSpec with ScalaCheck {
     """
 
   lazy val underTest = UserPass(config.wsClient)
+  lazy val authAdmin = Auth(config)
+  lazy val userAdmin = janstenpickle.vault.manage.UserPass(config)
 
-  def setupClient(client: String) =
-    rootConfig.authenticatedRequest(s"sys/auth/$client")(_.post(Json.toJson(Map("type" -> "userpass")))).
-      acceptStatusCodes(200, 204).
-      unsafePerformSyncAttempt must be_\/-
+  def setupClient(client: String) = authAdmin.enable("userpass", Some(client)).unsafePerformSyncAttempt must be_\/-
 
   def setupUser(username: String, password: String, client: String) =
-    rootConfig.authenticatedRequest(s"auth/$client/users/$username")(
-       _.post(Json.toJson(Map("password" -> password)))
-     ).acceptStatusCodes(204).unsafePerformSyncAttempt
+    userAdmin.create(username, password, 30, None, client).unsafePerformSyncAttempt
 
   def removeClient(client: String) =
-    rootConfig.authenticatedRequest(s"sys/auth/$client")(_.delete()).
-      acceptStatusCodes(204).
-      unsafePerformSyncAttempt must be_\/-
+    authAdmin.disable(client).unsafePerformSyncAttempt must be_\/-
 
   def authPass = test((username, password, client, ttl) =>
     setupClient(client) and
@@ -70,5 +62,5 @@ class UserPassIT extends VaultSpec with ScalaCheck {
   }
 
   def test(op: (String, String, String, Int) => MatchResult[Any]) =
-    Prop.forAllNoShrink(longerStrGen, longerStrGen, Gen.numStr.suchThat(!_.isEmpty), Gen.posNum[Int])(op)
+    Prop.forAllNoShrink(longerStrGen, longerStrGen, Gen.numStr.suchThat(_.nonEmpty), Gen.posNum[Int])(op)
 }

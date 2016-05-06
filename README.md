@@ -175,7 +175,23 @@ import janstenpickle.vault.manage.Auth
 class ClientAuth(config: VaultConfig) {
   val auth = Auth(config)
   def create(clientId: String, clientName: String): Task[WSResponse] = auth.enable("userpass", Some(clientId), Some(clientName))
-  def delete(cleintId: String): Task[WSResponse] = auth.disable(clientId)
+  def delete(clientId: String): Task[WSResponse] = auth.disable(clientId)
+}
+```
+#### User Administration
+```scala
+import janstenpickle.vault.core.VaultConfig
+import janstenpickle.vault.manage.UserPass
+
+class UserAdmin(config: VaultConfig, ttl: Int) {
+  val userPass = UserPass(config)
+  def create(username: String, password: String, clientId: String, policies: Option[List[String]] = None): Task[WSResponse] = 
+    userPass.create(username, password, ttl, policies, clientId)
+  def setPassword(username: String, password: String, clientId: String): Task[WSResponse] =
+    userPass.setPassword(username, password, clientId)
+  def setPoliciesusername: String, policies: List[String], clientId: String): Task[WSResponse] = 
+    userPass.setPolicies(username, policies, clientId)
+  def delete(username, clientId: String): Task[WSResponse] = userPass.delete(username, clientId)
 }
 ```
 #### User Authentication
