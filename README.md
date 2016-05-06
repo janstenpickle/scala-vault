@@ -54,7 +54,7 @@ import janstenpickle.vault.core.Secrets
 
 val config = VaultConfig(WSClientWrapper(new URL("https://localhost:8200")), AppId("appId", "userId"))
 
-val secrets = Secrets(config)
+val secrets = Secrets(config, "secret")
 ```
 #### Getting a secret
 ```scala

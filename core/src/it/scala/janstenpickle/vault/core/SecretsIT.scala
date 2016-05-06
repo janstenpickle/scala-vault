@@ -1,9 +1,18 @@
-package janstenpickle.vault.core
+package janstenpickle.vault.core.secrets
 
+import janstenpickle.vault.core.{Secrets, VaultSpec}
 import org.scalacheck.Prop
 import org.specs2.ScalaCheck
 
-class SecretsIT extends VaultSpec with ScalaCheck {
+class GenericIT extends SecretsTests {
+  override def backend: String = "secret"
+}
+
+class CubbyHoleIT extends SecretsTests {
+  override def backend: String = "cubbyhole"
+}
+
+trait SecretsTests extends VaultSpec with ScalaCheck {
   import VaultSpec._
 
   override def is =
@@ -18,9 +27,11 @@ class SecretsIT extends VaultSpec with ScalaCheck {
       Fails to perform actions with a bad token $failSetBadToken
       """
 
-  lazy val good = Secrets(config)
-  lazy val badToken = Secrets(badTokenConfig)
-  lazy val badServer = Secrets(badServerConfig)
+  def backend: String
+
+  lazy val good = Secrets(config, backend)
+  lazy val badToken = Secrets(badTokenConfig, backend)
+  lazy val badServer = Secrets(badServerConfig, backend)
 
   def set = Prop.forAllNoShrink(strGen, strGen) { (key, value) =>
     good.set(key, value).unsafePerformSyncAttempt must be_\/-
