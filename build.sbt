@@ -4,6 +4,7 @@ name := "vault"
 
 lazy val scalazVersion = "7.2.1"
 lazy val specs2Version = "3.7.2"
+lazy val circeVersion = "0.4.1"
 
 val pomInfo = (
   <url>https://github.com/intenthq/pucket</url>
@@ -27,7 +28,7 @@ val pomInfo = (
 )
 
 lazy val commonSettings = Seq(
-  version := "0.1.0",
+  version := "0.2.0",
   scalaVersion := "2.11.8",
   organization := "janstenpickle.vault",
   pomExtra := pomInfo,
@@ -37,13 +38,18 @@ lazy val commonSettings = Seq(
   bintrayReleaseOnPublish := false,
   licenses += ("MIT", url("https://github.com/janstenpickle/scala-vault/blob/master/LICENSE")),
   libraryDependencies ++= Seq(
-    "com.typesafe.play" %% "play-ws" % "2.5.1",
+    "net.databinder.dispatch" %% "dispatch-core" % "0.11.3",
     "org.scalaz" %% "scalaz-core" % scalazVersion,
     "org.scalaz" %% "scalaz-concurrent" % scalazVersion,
     "org.specs2" %% "specs2-core" % specs2Version % "it,test",
     "org.specs2" %% "specs2-scalacheck" % specs2Version % "it,test",
     "org.specs2" %% "specs2-junit" % specs2Version % "it,test"
   ),
+  libraryDependencies ++= Seq(
+    "io.circe" %% "circe-core",
+    "io.circe" %% "circe-generic",
+    "io.circe" %% "circe-parser"
+  ).map(_ % circeVersion),
   scalacOptions in Test ++= Seq(
     "-Yrangepos",
     "-Xlint",

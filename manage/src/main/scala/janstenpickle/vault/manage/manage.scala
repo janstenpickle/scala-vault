@@ -1,78 +1,81 @@
 package janstenpickle.vault.manage
 
+import com.ning.http.client.Response
 import janstenpickle.scala.syntax.vaultconfig._
-import janstenpickle.scala.syntax.wsresponse._
-import janstenpickle.scala.syntax.task._
+import janstenpickle.scala.syntax.response._
+import janstenpickle.scala.syntax.request._
 import janstenpickle.scala.syntax.option._
 import janstenpickle.vault.core.VaultConfig
 import janstenpickle.vault.manage.Model._
-import play.api.libs.json.Json
-import play.api.libs.ws.WSResponse
 
 import scala.concurrent.ExecutionContext
 import scalaz.\/
 import scalaz.concurrent.Task
 import scalaz.syntax.either._
+import io.circe.generic.auto._
+import io.circe.syntax._
 
 case class Auth(config: VaultConfig) {
   def enable(`type`: String,
              mountPoint: Option[String] = None,
              description: Option[String] = None)
-            (implicit ec: ExecutionContext): Task[WSResponse] =
+            (implicit ec: ExecutionContext): Task[Response] =
      config.authenticatedRequest(s"sys/auth/${mountPoint.getOrElse(`type`)}")(
-       _.post(Json.toJson(description.toMap("description") + ("type" -> `type`)))
-     ).acceptStatusCodes(204)
+       _.post(description.toMap("description") + ("type" -> `type`))
+     ).execute.acceptStatusCodes(204)
 
-  def disable(mountPoint: String)(implicit ec: ExecutionContext): Task[WSResponse] =
-    config.authenticatedRequest(s"sys/auth/$mountPoint")(_.delete()).
+  def disable(mountPoint: String)(implicit ec: ExecutionContext): Task[Response] =
+    config.authenticatedRequest(s"sys/auth/$mountPoint")(_.delete).
+      execute.
       acceptStatusCodes(204)
 }
 
 case class Mounts(config: VaultConfig) {
-  implicit val mountCountFormat = Json.format[MountConfig]
-  implicit val mountFormat = Json.format[Mount]
-  implicit val mountRequestFormat = Json.format[MountRequest]
-
-  def remount(from: String, to: String)(implicit ec: ExecutionContext): Task[WSResponse] =
+  def remount(from: String, to: String)(implicit ec: ExecutionContext): Task[Response] =
     config.authenticatedRequest("sys/remount")(
-      _.post(Json.toJson(Map("from" -> from, "to" -> to)))
-    ).acceptStatusCodes(204)
+      _.post(Map("from" -> from, "to" -> to))
+    ).execute.acceptStatusCodes(204)
 
   def list(implicit ec: ExecutionContext): Task[Map[String, Mount]] =
-    config.authenticatedRequest("sys/mounts")(_.get()).
+    config.authenticatedRequest("sys/mounts")(_.get).
+      execute.
       acceptStatusCodes(200).extractFromJson[Map[String, Mount]]()
 
   def mount(`type`: String,
             mountPoint: Option[String] = None,
             description: Option[String] = None,
             conf: Option[Mount] = None)
-           (implicit ec: ExecutionContext): Task[WSResponse] =
+           (implicit ec: ExecutionContext): Task[Response] =
     config.authenticatedRequest(s"sys/mounts/${mountPoint.getOrElse(`type`)}")(
-      _.post(Json.toJson(MountRequest(`type`, description, conf)))
-    ).acceptStatusCodes(204)
+      _.post(MountRequest(`type`, description, conf).asJson)
+    ).execute.acceptStatusCodes(204)
 
-  def delete(mountPoint: String)(implicit ec: ExecutionContext): Task[WSResponse] =
-    config.authenticatedRequest(s"sys/mounts/$mountPoint")(_.delete()).
+  def delete(mountPoint: String)(implicit ec: ExecutionContext): Task[Response] =
+    config.authenticatedRequest(s"sys/mounts/$mountPoint")(_.delete).
+      execute.
       acceptStatusCodes(204)
 }
 
 case class Policy(config: VaultConfig) {
-  implicit val policySettingFormat = Json.format[PolicySetting]
 
   def list(implicit ec: ExecutionContext): Task[List[String]] =
-    config.authenticatedRequest("sys/policy")(_.get()).
-      acceptStatusCodes(200).extractFromJson[List[String]](_ \ "policies")
+    config.authenticatedRequest("sys/policy")(_.get).
+      execute.
+      acceptStatusCodes(200).extractFromJson[List[String]](_.downField("policies"))
 
   def inspect(policy: String)(implicit ec: ExecutionContext): Task[PolicySetting] =
-    config.authenticatedRequest(s"sys/policy/$policy")(_.get()).
+    config.authenticatedRequest(s"sys/policy/$policy")(_.get).
+      execute.
       acceptStatusCodes(200).extractFromJson[PolicySetting]()
 
-  def set(policy: String, rules: List[Rule])(implicit ec: ExecutionContext): Task[WSResponse] =
-    config.authenticatedRequest(s"sys/policy/$policy")(_.post(Json.toJson(PolicySetting(policy, rules)))).
+  def set(policy: String, rules: List[Rule])(implicit ec: ExecutionContext): Task[Response] =
+    config.authenticatedRequest(s"sys/policy/$policy")(_.post(PolicySetting(policy, rules).asJson)).
+      execute.
       acceptStatusCodes(204)
 
-  def delete(policy: String)(implicit ec: ExecutionContext): Task[WSResponse] =
-    config.authenticatedRequest(s"sys/policy/$policy")(_.delete()).
+  def delete(policy: String)(implicit ec: ExecutionContext): Task[Response] =
+    config.authenticatedRequest(s"sys/policy/$policy")(_.delete).
+      execute.
       acceptStatusCodes(204)
 }
 

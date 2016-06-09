@@ -1,40 +1,78 @@
 package janstenpickle.vault.auth
 
 import janstenpickle.scala.syntax.vaultconfig._
-import janstenpickle.scala.syntax.wsresponse._
-import janstenpickle.scala.syntax.task._
+import janstenpickle.scala.syntax.response._
+import janstenpickle.scala.syntax.request._
 import janstenpickle.vault.core.VaultConfig
-import play.api.libs.json.Json
+
+import io.circe.generic.auto._
+import io.circe.syntax._
 
 import scala.concurrent.ExecutionContext
 import scala.util.Try
 import scalaz.concurrent.Task
 
 case class Token(config: VaultConfig) {
-  implicit val tokenResponseFormat = Json.format[TokenResponse]
+  import Token._
 
-  def validate(token: String)(implicit ec: ExecutionContext): Task[TokenResponse] =
-    config.authenticatedRequest(s"auth/token/lookup/$token")(_.get()).
+  def lookupPath(path: String)(implicit ec: ExecutionContext): Task[LookupResponse] =
+    config.authenticatedRequest(path)(_.get).
+      execute.
       acceptStatusCodes(200).
-      extractFromJson[TokenResponse](_ \ "data")
+      extractFromJson[LookupResponse](_.downField("data"))
+
+  def lookup(token: String)(implicit ec: ExecutionContext): Task[LookupResponse] =
+    lookupPath(s"$Path/lookup/$token")
+
+  def lookupSelf(implicit ec: ExecutionContext): Task[LookupResponse] =
+    lookupPath(s"$Path/lookup-self")
+
+  def create(policies: Option[List[String]] = None,
+             meta: Option[Map[String, String]] = None,
+             noParent: Option[Boolean] = None,
+             noDefaultPolicy: Option[Boolean] = None,
+             ttl: Option[Int] = None,
+             numUses: Option[Int] = None)(implicit ec: ExecutionContext): Task[CreateResponse] =
+    config.authenticatedRequest(s"$Path/create")(
+      _.post(CreateRequest(policies, meta, noParent, noDefaultPolicy, ttl.map(x => s"${x}s"), numUses).asJson)
+    ).execute.
+      acceptStatusCodes(200).
+      extractFromJson[CreateResponse](_.downField("auth"))
 }
 
-case class TokenResponse(id: String,
-                         policies: Option[List[String]],
-                         path: String,
+object Token {
+  val Path = "auth/token"
+}
+
+case class CreateRequest(policies: Option[List[String]],
                          meta: Option[Map[String, String]],
-                         display_name: Option[String],
-                         num_uses: Int,
-                         orphan: Boolean,
-                         role: String,
-                         ttl: Int) {
-  import TokenResponse._
+                         no_parent: Option[Boolean],
+                         no_default_policy: Option[Boolean],
+                         ttl: Option[String],
+                         num_uses: Option[Int])
+
+case class CreateResponse(client_token: String,
+                          policies: Option[List[String]],
+                          metadata: Option[Map[String, String]],
+                          lease_duration: Int,
+                          renewable: Boolean)
+
+case class LookupResponse(id: String,
+                          policies: Option[List[String]],
+                          path: String,
+                          meta: Option[Map[String, String]],
+                          display_name: Option[String],
+                          num_uses: Int,
+                          orphan: Boolean,
+                          role: String,
+                          ttl: Int) {
+  import LookupResponse._
 
   lazy val client: Option[String] =
     meta.flatMap(_.get("client")).fold(Try(path.split(Separator)(1)).toOption)(Some(_))
   lazy val username: Option[String] = meta.flatMap(_.get("username"))
 }
 
-object TokenResponse {
+object LookupResponse {
   val Separator = '/'
 }

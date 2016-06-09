@@ -2,19 +2,21 @@ package janstenpickle.vault.auth
 
 import janstenpickle.scala.syntax.task._
 import janstenpickle.scala.syntax.vaultconfig._
-import janstenpickle.scala.syntax.wsresponse._
+import janstenpickle.scala.syntax.response._
+import janstenpickle.scala.syntax.request._
 import janstenpickle.vault.core.VaultSpec
+import janstenpickle.vault.manage.Auth
 import org.scalacheck.{Gen, Prop}
 import org.specs2.ScalaCheck
 import org.specs2.matcher.MatchResult
-import play.api.libs.json.Json
+
+import io.circe.generic.auto._
+import io.circe.syntax._
 
 import scalaz.\/
 
 class TokenIT extends VaultSpec with ScalaCheck {
   import TokenIT._
-
-  implicit val userFormat = Json.format[User]
 
   def is = step(setupUserAuth) ^
     s2"""
@@ -23,14 +25,13 @@ class TokenIT extends VaultSpec with ScalaCheck {
       Fails to authenticate tokens which have expired $testExpiry
       """
 
-  def setupUserAuth =
-    rootConfig.authenticatedRequest(s"sys/auth/$clientId")(_.post(Json.toJson(Map("type" -> "userpass"))).toTask).
-      acceptStatusCodes(200, 204).
-      unsafePerformSyncAttempt
-
+  lazy val authAdmin = Auth(config)
   lazy val underTest = Token(config)
 
-  def testAdminToken = underTest.validate(adminToken).unsafePerformSyncAttempt must be_\/-
+  def setupUserAuth =
+    authAdmin.enable("userpass", Some(clientId)).unsafePerformSyncAttempt
+
+  def testAdminToken = underTest.lookup(adminToken).unsafePerformSyncAttempt must be_\/-
 
   def testAuth = testUserTokens(userGen(), (resp, user) => resp must be_\/-.
     like { case a =>
@@ -41,24 +42,24 @@ class TokenIT extends VaultSpec with ScalaCheck {
   def testExpiry = testUserTokens(userGen(Gen.chooseNum[Int](1, 1)), (resp, user) => resp must be_-\/, Some(1500))
 
   def testUserTokens(userGen: Gen[User],
-                     test: (Throwable \/ TokenResponse, User) => MatchResult[Any],
+                     test: (Throwable \/ LookupResponse, User) => MatchResult[Any],
                      sleep: Option[Int] = None) =
     Prop.forAllNoShrink(userGen) { user =>
       val userCreation = rootConfig.authenticatedRequest(s"auth/$clientId/users/${user.username}")(
-        _.post(Json.toJson(user))
-      ).acceptStatusCodes(204).unsafePerformSyncAttempt must be_\/-
+        _.post(user.asJson)
+      ).execute.acceptStatusCodes(204).unsafePerformSyncAttempt must be_\/-
 
       val userAuth = config.wsClient.path(s"auth/$clientId/login/${user.username}").
-        post(Json.toJson(Map("username" -> user.username, "password" -> user.password))).
+        post(Map("username" -> user.username, "password" -> user.password)).
         toTask.
         acceptStatusCodes(200).
-        extractFromJson[String](_ \ "auth" \ "client_token").
+        extractFromJson[String](_.downField("auth").downField("client_token")).
         unsafePerformSyncAttempt
 
       sleep.foreach(Thread.sleep(_))
 
       userCreation and
-      (userAuth must be_\/-.like { case token => test(underTest.validate(token).unsafePerformSyncAttempt, user) })
+      (userAuth must be_\/-.like { case token => test(underTest.lookup(token).unsafePerformSyncAttempt, user) })
     }
 
 }
@@ -75,7 +76,7 @@ object TokenIT {
   val usernameGen = for {
     clientId <- longerStrGen
     username <- longerStrGen
-  } yield s"$clientId${TokenResponse.Separator}$username"
+  } yield s"$clientId${LookupResponse.Separator}$username"
 
   def userGen(ttlGen: Gen[Int] = Gen.posNum[Int]): Gen[User] = for {
     username <- longerStrGen

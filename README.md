@@ -19,9 +19,9 @@ addSbtPlugin("me.lessis" % "bintray-sbt" % "0.3.0")
 Then add the following to your `build.sbt`
 ```scala
 resolvers += Resolver.bintrayRepo("janstenpickle", "maven")
-libraryDependencies += "janstenpickle.vault" %% "vault-core" % "0.1.0"
-libraryDependencies += "janstenpickle.vault" %% "vault-auth" % "0.1.0"
-libraryDependencies += "janstenpickle.vault" %% "vault-manage" % "0.1.0"
+libraryDependencies += "janstenpickle.vault" %% "vault-core" % "0.2.0"
+libraryDependencies += "janstenpickle.vault" %% "vault-auth" % "0.2.0"
+libraryDependencies += "janstenpickle.vault" %% "vault-manage" % "0.2.0"
 ```
 ## Usage
 Simple setup:
@@ -30,14 +30,14 @@ import java.net.URL
 
 import janstenpickle.vault.core.AppId
 import janstenpickle.vault.core.VaultConfig
-import janstenpickle.vault.core.WSClientWrapper
+import janstenpickle.vault.core.WSClient
 
-val config = VaultConfig(WSClientWrapper(new URL("https://localhost:8200")), "token")
+val config = VaultConfig(WSClient(new URL("https://localhost:8200")), "token")
 
-val appIdConfig = VaultConfig(WSClientWrapper(new URL("https://localhost:8200")), AppId("appId", "userId"))
+val appIdConfig = VaultConfig(WSClient(new URL("https://localhost:8200")), AppId("appId", "userId"))
 ```
-### WSClientWrapper
-This library uses the [Play WS Client library](https://www.playframework.com/documentation/2.5.x/ScalaWS) to communicate with Vault. The [WSClientWrapper](core/src/main/scala/janstenpickle/vault/core/VaultConfig.scala#L41:L63) enables configuration of a custom keystore where Vault has been protected by a self-signed certificated. This can accept a PEM file or a standard Java keystore. By default no keystore is needed, just a URL to Vault.
+### WSClient
+This library uses the [Dispatch](http://dispatch.databinder.net/Dispatch.html), a lightweight async HTTP client to communicate with Vault.
 
 ### Responses
 All responses from Vault are wrapped in an asynchronous [Scalaz Task](http://timperrett.com/2014/07/20/scalaz-task-the-missing-documentation/). This allows any errors in the response are captured separately from the failure of the underlying future. Essentially a Task is a [Disjunction](http://eed3si9n.com/learning-scalaz/Either.html) wrapped in a Future: `Future[Throwable \/ A]`.
@@ -48,11 +48,11 @@ import java.net.URL
 
 import janstenpickle.vault.core.AppId
 import janstenpickle.vault.core.VaultConfig
-import janstenpickle.vault.core.WSClientWrapper
+import janstenpickle.vault.core.WSClient
 import janstenpickle.vault.core.Secrets
 
 
-val config = VaultConfig(WSClientWrapper(new URL("https://localhost:8200")), AppId("appId", "userId"))
+val config = VaultConfig(WSClient(new URL("https://localhost:8200")), AppId("appId", "userId"))
 
 val secrets = Secrets(config, "secret")
 ```
@@ -87,11 +87,11 @@ val response = secrets.list
 ```scala
 import java.net.URL
 
-import janstenpickle.vault.core.WSClientWrapper
+import janstenpickle.vault.core.WSClient
 import janstenpickle.vault.auth.UserPass
 
 
-val userPass = UserPass(WSClientWrapper(new URL("https://localhost:8200")))
+val userPass = UserPass(WSClient(new URL("https://localhost:8200")))
 
 val ttl = 10 * 60
 val response = userPass.authenticate("username", "password", ttl)
@@ -110,11 +110,11 @@ import java.net.URL
 
 import janstenpickle.vault.core.AppId
 import janstenpickle.vault.core.VaultConfig
-import janstenpickle.vault.core.WSClientWrapper
+import janstenpickle.vault.core.WSClient
 import janstenpickle.vault.auth.Token
 
 
-val config = VaultConfig(WSClientWrapper(new URL("https://localhost:8200")), AppId("appId", "userId"))
+val config = VaultConfig(WSClient(new URL("https://localhost:8200")), AppId("appId", "userId"))
 
 val token = Token(config)
 
@@ -132,11 +132,11 @@ import java.net.URL
 
 import janstenpickle.vault.core.AppId
 import janstenpickle.vault.core.VaultConfig
-import janstenpickle.vault.core.WSClientWrapper
+import janstenpickle.vault.core.WSClient
 import janstenpickle.vault.manage.Auth
 
 
-val config = VaultConfig(WSClientWrapper(new URL("https://localhost:8200")), AppId("appId", "userId"))
+val config = VaultConfig(WSClient(new URL("https://localhost:8200")), AppId("appId", "userId"))
 
 val auth = Auth(config)
 
@@ -196,10 +196,10 @@ class UserAdmin(config: VaultConfig, ttl: Int) {
 ```
 #### User Authentication
 ```scala
-import janstenpickle.vault.core.WSClientWrapper
+import janstenpickle.vault.core.WSClient
 import janstenpickle.vault.manage.Auth
 
-class UserAuth(wsClient: WSClientWrapper, ttl: Int) {
+class UserAuth(wsClient: WSClient, ttl: Int) {
   val userPass = UserPass(wsClient)
   
   // returns only the token

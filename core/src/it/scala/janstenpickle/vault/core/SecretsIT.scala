@@ -1,6 +1,5 @@
-package janstenpickle.vault.core.secrets
+package janstenpickle.vault.core
 
-import janstenpickle.vault.core.{Secrets, VaultSpec}
 import org.scalacheck.Prop
 import org.specs2.ScalaCheck
 

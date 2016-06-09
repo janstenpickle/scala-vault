@@ -1,65 +1,41 @@
 package janstenpickle.vault.core
 
-import java.io.File
 import java.net.URL
-import java.security.KeyStore
 
-import akka.stream.Materializer
+import dispatch.{Req, url}
+import io.circe.generic.auto._
+import io.circe.syntax._
+import janstenpickle.scala.syntax.request._
+import janstenpickle.scala.syntax.response._
 import janstenpickle.scala.syntax.task._
-import janstenpickle.scala.syntax.wsresponse._
-import play.api.libs.json._
-import play.api.libs.ws.ssl.{KeyStoreConfig, KeyManagerConfig, SSLConfig}
-import play.api.libs.ws.{WSClientConfig, WSRequest}
-import play.api.libs.ws.ahc.{AhcWSClientConfig, AhcWSClient}
 
 import scala.concurrent.ExecutionContext
 import scalaz.concurrent.Task
 
-case class VaultConfig(wsClient: WSClientWrapper, token: Task[String])
+case class VaultConfig(wsClient: WSClient, token: Task[String])
+case class AppId(app_id: String, user_id: String)
 
 object VaultConfig {
-  implicit val appIdFormat = Json.format[AppId]
 
-  def apply(wsClient: WSClientWrapper, appId: AppId)(implicit ec: ExecutionContext): VaultConfig =
-    VaultConfig(
-      wsClient,
-      wsClient.
-      path("auth/app-id/login").
-      post(Json.toJson(appId)).
-      toTask.
-      acceptStatusCodes(200).
-      extractFromJson[String](_ \ "auth" \ "client_token",
-                              Some("Could not find client token in response from vault"))
-    )
+  def apply(client: WSClient, appId: AppId)(implicit ec: ExecutionContext): VaultConfig =
+    VaultConfig(client,
+                client.path("auth/app-id/login").
+                  post(appId.asJson).
+                  toTask.
+                  acceptStatusCodes(200).
+                  extractFromJson[String](_.downField("auth").downField("client_token")))
 
-  def apply(wsClient: WSClientWrapper, token: String): VaultConfig =
+  def apply(wsClient: WSClient, token: String): VaultConfig =
     VaultConfig(wsClient, Task.now(token))
 }
 
-case class AppId(app_id: String, user_id: String)
 
-case class WSClientWrapper(server: URL,
-                           version: String = "v1",
-                           keyStoreType: Option[String] = None,
-                           keyStoreFile: Option[File] = None,
-                           keyStorePassword: Option[String] = None)(implicit materializer: Materializer) {
 
-  val underlying: AhcWSClient = AhcWSClient(
-    AhcWSClientConfig(
-      wsClientConfig = WSClientConfig(
-        ssl = SSLConfig(
-          keyManagerConfig = KeyManagerConfig(
-            keyStoreConfigs = keyStoreFile.map( ksFile =>
-              KeyStoreConfig(storeType = keyStoreType.getOrElse(KeyStore.getDefaultType),
-                             filePath = Some(ksFile.getAbsolutePath),
-                             password = keyStorePassword)).toSeq
-            )
-          )
-        )
-      )
-    )
-
-  def path(p: String): WSRequest = underlying.url(s"${server.toString}/$version/$p")
+case class WSClient(server: URL,
+                    version: String = "v1") {
+   def path(p: String): Req =
+     url(s"${server.toString}/$version/$p").
+       setContentType("application/json", "UTF-8")
 }
 
 

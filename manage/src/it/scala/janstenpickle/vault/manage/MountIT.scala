@@ -1,12 +1,12 @@
 package janstenpickle.vault.manage
 
+import com.ning.http.client.Response
+import com.ning.http.client.providers.jdk.JDKResponse
 import janstenpickle.vault.core.VaultSpec
-import janstenpickle.vault.manage.Model.{MountConfig, Mount}
-import org.asynchttpclient.Response.ResponseBuilder
+import janstenpickle.vault.manage.Model.{Mount, MountConfig}
 import org.scalacheck.{Gen, Prop}
 import org.specs2.ScalaCheck
-import play.api.libs.ws.ahc.AhcWSResponse
-import play.api.libs.ws.WSResponse
+
 import scalaz.\/
 import scalaz.syntax.either._
 
@@ -66,8 +66,8 @@ object MountIT {
     ttl <- Gen.posNum[Int]
   } yield Mount(mountType, description, Some(MountConfig(ttl, ttl)))
 
-  def processMountTypes(op: (Throwable \/ WSResponse, String) => Throwable \/ WSResponse) =
-    mountTypes.foldLeft[Throwable \/ WSResponse](AhcWSResponse(new ResponseBuilder().build()).right[Throwable])(op)
+  def processMountTypes(op: (Throwable \/ Response, String) => Throwable \/ Response) =
+    mountTypes.foldLeft[Throwable \/ Response](new JDKResponse(null, null, null).right[Throwable])(op)
 }
 
 
