@@ -1,6 +1,6 @@
 package janstenpickle.vault.auth
 
-import janstenpickle.scala.syntax.task._
+import janstenpickle.scala.syntax.asyncresult._
 import janstenpickle.scala.syntax.vaultconfig._
 import janstenpickle.scala.syntax.response._
 import janstenpickle.scala.syntax.request._
@@ -9,11 +9,9 @@ import janstenpickle.vault.manage.Auth
 import org.scalacheck.{Gen, Prop}
 import org.specs2.ScalaCheck
 import org.specs2.matcher.MatchResult
-
 import io.circe.generic.auto._
 import io.circe.syntax._
-
-import scalaz.\/
+import uscala.result.Result
 
 class TokenIT extends VaultSpec with ScalaCheck {
   import TokenIT._
@@ -29,37 +27,37 @@ class TokenIT extends VaultSpec with ScalaCheck {
   lazy val underTest = Token(config)
 
   def setupUserAuth =
-    authAdmin.enable("userpass", Some(clientId)).unsafePerformSyncAttempt
+    authAdmin.enable("userpass", Some(clientId)).attemptRun(_.getMessage)
 
-  def testAdminToken = underTest.lookup(adminToken).unsafePerformSyncAttempt must be_\/-
+  def testAdminToken = underTest.lookup(adminToken).attemptRun(_.getMessage) must beOk
 
-  def testAuth = testUserTokens(userGen(), (resp, user) => resp must be_\/-.
+  def testAuth = testUserTokens(userGen(), (resp, user) => resp must beOk.
     like { case a =>
       a.username === Some(user.username.toLowerCase) and
       a.client === Some(clientId) and
       (a.ttl must beLessThanOrEqualTo(user.getTtl))})
 
-  def testExpiry = testUserTokens(userGen(Gen.chooseNum[Int](1, 1)), (resp, user) => resp must be_-\/, Some(1500))
+  def testExpiry = testUserTokens(userGen(Gen.chooseNum[Int](1, 1)), (resp, user) => resp must beFail, Some(1500))
 
   def testUserTokens(userGen: Gen[User],
-                     test: (Throwable \/ LookupResponse, User) => MatchResult[Any],
+                     test: (Result[String, LookupResponse], User) => MatchResult[Any],
                      sleep: Option[Int] = None) =
     Prop.forAllNoShrink(userGen) { user =>
       val userCreation = rootConfig.authenticatedRequest(s"auth/$clientId/users/${user.username}")(
         _.post(user.asJson)
-      ).execute.acceptStatusCodes(204).unsafePerformSyncAttempt must be_\/-
+      ).execute.acceptStatusCodes(204).attemptRun must beOk
 
       val userAuth = config.wsClient.path(s"auth/$clientId/login/${user.username}").
         post(Map("username" -> user.username, "password" -> user.password)).
-        toTask.
+        toAsyncResult.
         acceptStatusCodes(200).
         extractFromJson[String](_.downField("auth").downField("client_token")).
-        unsafePerformSyncAttempt
+        attemptRun(_.getMessage)
 
       sleep.foreach(Thread.sleep(_))
 
       userCreation and
-      (userAuth must be_\/-.like { case token => test(underTest.lookup(token).unsafePerformSyncAttempt, user) })
+      (userAuth must beOk.like { case token => test(underTest.lookup(token).attemptRun(_.getMessage), user) })
     }
 
 }

@@ -33,34 +33,34 @@ trait SecretsTests extends VaultSpec with ScalaCheck {
   lazy val badServer = Secrets(badServerConfig, backend)
 
   def set = Prop.forAllNoShrink(strGen, strGen) { (key, value) =>
-    good.set(key, value).unsafePerformSyncAttempt must be_\/-
+    good.set(key, value).attemptRun(_.getMessage()) must beOk
   }
 
   def get = Prop.forAllNoShrink(strGen, strGen) { (key, value) =>
-    (good.set(key, value).unsafePerformSyncAttempt must be_\/-) and
-    (good.get(key).unsafePerformSyncAttempt must be_\/-.like { case a => a === value })
+    (good.set(key, value).attemptRun(_.getMessage()) must beOk) and
+    (good.get(key).attemptRun(_.getMessage()) must beOk.like { case a => a === value })
   }
 
   def list = Prop.forAllNoShrink(strGen, strGen, strGen) { (key1, key2, value) =>
-    (good.set(key1, value).unsafePerformSyncAttempt must be_\/-) and
-    (good.set(key2, value).unsafePerformSyncAttempt must be_\/-) and
-    (good.list.unsafePerformSyncAttempt must be_\/-.like { case a => a must containAllOf(Seq(key1, key2)) })
+    (good.set(key1, value).attemptRun(_.getMessage()) must beOk) and
+    (good.set(key2, value).attemptRun(_.getMessage()) must beOk) and
+    (good.list.attemptRun(_.getMessage()) must beOk[List[String]].like { case a => a must containAllOf(Seq(key1, key2)) })
   }
 
   def setMulti = Prop.forAllNoShrink(strGen, strGen, strGen, strGen) { (key1, key2, value1, value2) =>
-    good.set("nicolas-cage", Map(key1 -> value1, key2 -> value2)).unsafePerformSyncAttempt must be_\/-
+    good.set("nicolas-cage", Map(key1 -> value1, key2 -> value2)).attemptRun(_.getMessage()) must beOk
   }
 
   def getSetMulti = Prop.forAllNoShrink(strGen, strGen, strGen, strGen, strGen) { (key1, key2, value1, value2, mainKey) =>
     val testData = Map(key1 -> value1, key2 -> value2)
-    (good.set(mainKey, testData).unsafePerformSyncAttempt must be_\/-) and
-    (good.getAll(mainKey).unsafePerformSyncAttempt must be_\/-.like { case a => a === testData })
+    (good.set(mainKey, testData).attemptRun(_.getMessage()) must beOk) and
+    (good.getAll(mainKey).attemptRun(_.getMessage()) must beOk.like { case a => a === testData })
   }
 
-  def failGet = good.get("john").unsafePerformSyncAttempt must be_-\/.
-    like { case ex => ex.getMessage must contain("Received failure response from server: 404") }
+  def failGet = good.get("john").attemptRun(_.getMessage()) must beFail.
+    like { case err => err must contain("Received failure response from server: 404") }
 
-  def failSetBadServer = badServer.set("nic", "cage").unsafePerformSyncAttempt must be_-\/
+  def failSetBadServer = badServer.set("nic", "cage").attemptRun(_.getMessage()) must beFail
 
-  def failSetBadToken = badToken.set("nic", "cage").unsafePerformSyncAttempt must be_-\/
+  def failSetBadToken = badToken.set("nic", "cage").attemptRun(_.getMessage()) must beFail
 }

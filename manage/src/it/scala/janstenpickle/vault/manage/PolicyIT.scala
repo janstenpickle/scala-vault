@@ -2,10 +2,9 @@ package janstenpickle.vault.manage
 
 import janstenpickle.vault.core.VaultSpec
 import janstenpickle.vault.manage.Model.Rule
-import org.scalacheck.{Prop, Gen}
+import org.scalacheck.{Gen, Prop}
 import org.specs2.ScalaCheck
-import scalaz.\/
-import scalaz.syntax.either._
+import uscala.result.Result
 
 class PolicyIT extends VaultSpec with ScalaCheck {
   import PolicyIT._
@@ -19,18 +18,22 @@ class PolicyIT extends VaultSpec with ScalaCheck {
 
   lazy val underTest = Policy(config)
 
+
+  def cunt(shit: Option[Result[String, List[Rule]]]): Result[String, List[Rule]] =
+    shit.fold[Result[String, List[Rule]]](Result.fail(""))(identity)
+
   def happy = Prop.forAllNoShrink(longerStrGen,
                                   Gen.listOf(ruleGen(longerStrGen, policyGen, capabilitiesGen)).
                                    suchThat(_.nonEmpty)) { (name, rules) =>
-    (underTest.set(name.toLowerCase, rules).unsafePerformSyncAttempt must be_\/-) and
-    (underTest.inspect(name.toLowerCase).unsafePerformSyncAttempt.
-      flatMap(_.decodeRules.fold[Throwable \/ List[Rule]](new RuntimeException().left)(identity)) must be_\/-.
-      like { case a => a must containTheSameElementsAs(rules) }) and
-    (underTest.delete(name.toLowerCase).unsafePerformSyncAttempt must be_\/-)
+    (underTest.set(name.toLowerCase, rules).attemptRun(_.getMessage()) must beOk) and
+    (underTest.inspect(name.toLowerCase).attemptRun(_.getMessage()).flatMap(
+      _.decodeRules.fold[Result[String, List[Rule]]](Result.fail(""))(identity)
+    ) must beOk.like { case a => a must containTheSameElementsAs(rules) }) and
+    (underTest.delete(name.toLowerCase).attemptRun(_.getMessage()) must beOk)
   }
 
   // cannot use generated values here as vault seems to have a failure rate limit
-  def sad = underTest.set("nic", List(Rule("cage", Some(List("kim", "copolla"))))).unsafePerformSyncAttempt must be_-\/
+  def sad = underTest.set("nic", List(Rule("cage", Some(List("kim", "copolla"))))).attemptRun(_.getMessage()) must beFail
 }
 
 object PolicyIT {

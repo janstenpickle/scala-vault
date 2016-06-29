@@ -1,24 +1,21 @@
 package janstenpickle.vault.auth
 
-import janstenpickle.vault.core.WSClient
-import janstenpickle.scala.syntax.response._
-import janstenpickle.scala.syntax.request._
-import janstenpickle.scala.syntax.task._
-
 import io.circe.generic.auto._
-import io.circe.syntax._
+import janstenpickle.concurrent.result.AsyncResult
+import janstenpickle.scala.syntax.asyncresult._
+import janstenpickle.scala.syntax.request._
+import janstenpickle.scala.syntax.response._
+import janstenpickle.vault.core.WSClient
 
 import scala.concurrent.ExecutionContext
-import scalaz.concurrent.Task
 
 case class UserPass(wsClient: WSClient) {
 
-
   def authenticate(username: String, password: String, ttl: Int, client: String = "userpass")
-                  (implicit ec: ExecutionContext): Task[UserPassResponse] =
+                  (implicit ec: ExecutionContext): AsyncResult[String, UserPassResponse] =
     wsClient.path(s"auth/$client/login/$username").
       post(Map("password" -> password, "ttl" -> s"${ttl}s")).
-      toTask.
+      toAsyncResult.
       acceptStatusCodes(200).
       extractFromJson[UserPassResponse](_.downField("auth"))
 }

@@ -1,22 +1,19 @@
 package janstenpickle.scala.syntax
 
 import cats.data.Xor
+import com.ning.http.client.Response
+import dispatch.{Http, Req}
 import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
-import com.ning.http.client.Response
-import dispatch.{Http, Req}
+import janstenpickle.concurrent.result.AsyncResult
 import janstenpickle.vault.core.VaultConfig
-import scalaz.\/
+import uscala.result.Result
 
-import scala.concurrent.ExecutionContext
-import scala.util.{Failure, Success}
-import scalaz.concurrent.Task
-import scalaz.syntax.either._
-import scalaz.syntax.std.boolean._
+import scala.concurrent.{ExecutionContext, Future}
 
 object catsconversion {
-  implicit def toDisjunction[A, B](xor: Xor[A, B]): A \/ B = xor.fold(_.left, _.right)
+  implicit def toResult[A, B](xor: Xor[A, B]): Result[A, B] = xor.fold(Result.fail, Result.ok)
 }
 
 object option {
@@ -25,37 +22,27 @@ object option {
       opt.fold[Map[String, T]](Map.empty)(v => Map(key -> v))
   }
 }
- object task {
-  implicit class FutureToTask[A](future: scala.concurrent.Future[A]) {
-    def toTask(implicit ec: ExecutionContext): Task[A] =
-      Task.async { register =>
-        future.onComplete {
-            case Success(v) => register(v.right)
-            case Failure(ex) => register(ex.left)
-          }
-        }
+
+object asyncresult {
+  implicit class FutureToAsyncResult[T](future: Future[T])(implicit ec: ExecutionContext) {
+    def toAsyncResult: AsyncResult[String, T] = AsyncResult(future.map(Result.ok))
   }
 
-  implicit class OptionToTask[A](option: Option[A]) {
-    def toTask(errorMsg: String)(implicit ec: ExecutionContext): Task[A] =
-      option.fold[Task[A]](
-        Task.fail(new RuntimeException(errorMsg))
-      )(Task.now)
+  implicit class ReqToAsyncResult(req: Req)(implicit ec: ExecutionContext) {
+    def toAsyncResult: AsyncResult[String, Response] = Http(req).toAsyncResult
   }
 
-  implicit class ReqToTask(req: Req) {
-    def toTask(implicit ec: ExecutionContext): Task[Response] = Http(req).toTask
-  }
-
-  implicit def toTask[T](future: scala.concurrent.Future[T])(implicit ec: ExecutionContext): Task[T] = future.toTask
+  implicit def toAsyncResult[T](future: scala.concurrent.Future[T])(implicit ec: ExecutionContext): AsyncResult[String, T] =
+    future.toAsyncResult
 }
 
 object vaultconfig {
+
   final val VaultTokenHeader = "X-Vault-Token"
 
   implicit class RequestHelper(config: VaultConfig) {
     def authenticatedRequest(path: String)(req: Req => Req)
-                            (implicit ec: ExecutionContext): Task[Req] =
+                            (implicit ec: ExecutionContext): AsyncResult[String, Req] =
       config.token.map[Req](token =>
         req(config.wsClient.path(path).setHeader(VaultTokenHeader, token))
       )
@@ -65,43 +52,43 @@ object vaultconfig {
 object json {
   import catsconversion._
 
-  implicit class JsonHandler(json: Task[Json]) {
-    def extractFromJson[T](jsonPath: HCursor => ACursor = _.acursor)(implicit decode: Decoder[T], ec: ExecutionContext): Task[T] =
-      json.flatMap[T](j => Task.fromDisjunction(decode.tryDecode(jsonPath(j.hcursor)).leftMap(new RuntimeException(_))))
+  implicit class JsonHandler(json: AsyncResult[String, Json]) {
+    def extractFromJson[T](jsonPath: HCursor => ACursor = _.acursor)
+                          (implicit decode: Decoder[T], ec: ExecutionContext): AsyncResult[String, T] =
+      json.flatMapR(j => decode.tryDecode(jsonPath(j.hcursor)).leftMap(_.message))
   }
 }
 
 object response {
-  import json._
   import catsconversion._
+  import json._
 
-  implicit class ResponseHandler(resp: Task[Response]) {
-    def acceptStatusCodes(codes: Int*)(implicit ec: ExecutionContext): Task[Response] =
-      resp.flatMap(response =>
-        codes.contains(response.getStatusCode).option(Task.now(response)).getOrElse(
-          Task.fail(
-            new RuntimeException(s"Received failure response from server: ${response.getStatusCode} \n ${response.getResponseBody}")
+  implicit class ResponseHandler(resp: AsyncResult[String, Response]) {
+    def acceptStatusCodes(codes: Int*)(implicit ec: ExecutionContext): AsyncResult[String, Response] =
+      resp.flatMapR(
+        response =>
+          if (codes.contains(response.getStatusCode)) Result.ok(response)
+          else Result.fail(
+            s"Received failure response from server: ${response.getStatusCode} \n ${response.getResponseBody}"
           )
-        )
       )
 
-    def extractJson(implicit ec: ExecutionContext): Task[Json] =
-      resp.flatMap(response =>
-        Task.fromDisjunction(parse(response.getResponseBody).leftMap(new RuntimeException(_)))
+    def extractJson(implicit ec: ExecutionContext): AsyncResult[String, Json] =
+      resp.flatMapR(response =>
+        parse(response.getResponseBody).leftMap(_.message)
       )
 
     def extractFromJson[T](jsonPath: HCursor => ACursor = _.acursor)
-                          (implicit decode: Decoder[T], ec: ExecutionContext): Task[T] =
+                          (implicit decode: Decoder[T], ec: ExecutionContext): AsyncResult[String, T] =
       resp.extractJson.extractFromJson[T](jsonPath)
   }
 }
 
 object request {
-  import task._
 
-  implicit class ExecuteRequest(req: Task[Req])(implicit ec: ExecutionContext) {
-    def execute: Task[Response] =
-      req.flatMap(Http(_).toTask)
+  implicit class ExecuteRequest(req: AsyncResult[String, Req])(implicit ec: ExecutionContext) {
+    def execute: AsyncResult[String, Response] =
+      req.flatMapF(Http(_))
   }
 
   implicit class HttpOps(req: Req) {

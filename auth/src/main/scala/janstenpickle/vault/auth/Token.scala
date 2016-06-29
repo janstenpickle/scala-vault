@@ -1,30 +1,29 @@
 package janstenpickle.vault.auth
 
-import janstenpickle.scala.syntax.vaultconfig._
-import janstenpickle.scala.syntax.response._
-import janstenpickle.scala.syntax.request._
-import janstenpickle.vault.core.VaultConfig
-
 import io.circe.generic.auto._
 import io.circe.syntax._
+import janstenpickle.concurrent.result.AsyncResult
+import janstenpickle.scala.syntax.request._
+import janstenpickle.scala.syntax.response._
+import janstenpickle.scala.syntax.vaultconfig._
+import janstenpickle.vault.core.VaultConfig
 
 import scala.concurrent.ExecutionContext
 import scala.util.Try
-import scalaz.concurrent.Task
 
 case class Token(config: VaultConfig) {
   import Token._
 
-  def lookupPath(path: String)(implicit ec: ExecutionContext): Task[LookupResponse] =
+  def lookupPath(path: String)(implicit ec: ExecutionContext): AsyncResult[String, LookupResponse] =
     config.authenticatedRequest(path)(_.get).
       execute.
       acceptStatusCodes(200).
       extractFromJson[LookupResponse](_.downField("data"))
 
-  def lookup(token: String)(implicit ec: ExecutionContext): Task[LookupResponse] =
+  def lookup(token: String)(implicit ec: ExecutionContext): AsyncResult[String, LookupResponse] =
     lookupPath(s"$Path/lookup/$token")
 
-  def lookupSelf(implicit ec: ExecutionContext): Task[LookupResponse] =
+  def lookupSelf(implicit ec: ExecutionContext): AsyncResult[String, LookupResponse] =
     lookupPath(s"$Path/lookup-self")
 
   def create(policies: Option[List[String]] = None,
@@ -32,7 +31,7 @@ case class Token(config: VaultConfig) {
              noParent: Option[Boolean] = None,
              noDefaultPolicy: Option[Boolean] = None,
              ttl: Option[Int] = None,
-             numUses: Option[Int] = None)(implicit ec: ExecutionContext): Task[CreateResponse] =
+             numUses: Option[Int] = None)(implicit ec: ExecutionContext): AsyncResult[String, CreateResponse] =
     config.authenticatedRequest(s"$Path/create")(
       _.post(CreateRequest(policies, meta, noParent, noDefaultPolicy, ttl.map(x => s"${x}s"), numUses).asJson)
     ).execute.

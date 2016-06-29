@@ -40,7 +40,7 @@ val appIdConfig = VaultConfig(WSClient(new URL("https://localhost:8200")), AppId
 This library uses the [Dispatch](http://dispatch.databinder.net/Dispatch.html), a lightweight async HTTP client to communicate with Vault.
 
 ### Responses
-All responses from Vault are wrapped in an asynchronous [Scalaz Task](http://timperrett.com/2014/07/20/scalaz-task-the-missing-documentation/). This allows any errors in the response are captured separately from the failure of the underlying future. Essentially a Task is a [Disjunction](http://eed3si9n.com/learning-scalaz/Either.html) wrapped in a Future: `Future[Throwable \/ A]`.
+All responses from Vault are wrapped in an asynchronous [Result](http://github.com/albertpastrana/uscala). This allows any errors in the response are captured separately from the failure of the underlying future.
 
 ### Reading and writing secrets
 ```scala
@@ -174,8 +174,8 @@ import janstenpickle.vault.manage.Auth
 
 class ClientAuth(config: VaultConfig) {
   val auth = Auth(config)
-  def create(clientId: String, clientName: String): Task[WSResponse] = auth.enable("userpass", Some(clientId), Some(clientName))
-  def delete(clientId: String): Task[WSResponse] = auth.disable(clientId)
+  def create(clientId: String, clientName: String): AsyncResult[WSResponse] = auth.enable("userpass", Some(clientId), Some(clientName))
+  def delete(clientId: String): AsyncResult[WSResponse] = auth.disable(clientId)
 }
 ```
 #### User Administration
@@ -185,13 +185,13 @@ import janstenpickle.vault.manage.UserPass
 
 class UserAdmin(config: VaultConfig, ttl: Int) {
   val userPass = UserPass(config)
-  def create(username: String, password: String, clientId: String, policies: Option[List[String]] = None): Task[WSResponse] = 
+  def create(username: String, password: String, clientId: String, policies: Option[List[String]] = None): AsyncResult[WSResponse] = 
     userPass.create(username, password, ttl, policies, clientId)
-  def setPassword(username: String, password: String, clientId: String): Task[WSResponse] =
+  def setPassword(username: String, password: String, clientId: String): AsyncResult[WSResponse] =
     userPass.setPassword(username, password, clientId)
-  def setPoliciesusername: String, policies: List[String], clientId: String): Task[WSResponse] = 
+  def setPoliciesUsername: String, policies: List[String], clientId: String): AsyncResult[WSResponse] = 
     userPass.setPolicies(username, policies, clientId)
-  def delete(username, clientId: String): Task[WSResponse] = userPass.delete(username, clientId)
+  def delete(username, clientId: String): AsyncResult[WSResponse] = userPass.delete(username, clientId)
 }
 ```
 #### User Authentication
@@ -203,7 +203,7 @@ class UserAuth(wsClient: WSClient, ttl: Int) {
   val userPass = UserPass(wsClient)
   
   // returns only the token
-  def auth(username: String, password: String, clientId: String): Task[String] =
+  def auth(username: String, password: String, clientId: String): AsyncResult[String] =
     userPass.authenticate(username, password, ttl, clientId).map(_.client_token)
 }
 ```
@@ -218,7 +218,7 @@ class TokenValidation(config: VaultConfig) {
   val token = Token(config)
   
   //only return the username, clientId and policies from the response
-  def validate(userToken: String): Task[Option[ValidationResponse]] = 
+  def validate(userToken: String): AsyncResult[Option[ValidationResponse]] = 
     token.validate(userToken).map(tr => 
       for {
         username <- tr.username
