@@ -2,11 +2,11 @@ package janstenpickle.vault.auth
 
 import io.circe.generic.auto._
 import io.circe.syntax._
-import janstenpickle.concurrent.result.AsyncResult
 import janstenpickle.scala.syntax.request._
 import janstenpickle.scala.syntax.response._
 import janstenpickle.scala.syntax.vaultconfig._
 import janstenpickle.vault.core.VaultConfig
+import uscala.concurrent.result.AsyncResult
 
 import scala.concurrent.ExecutionContext
 import scala.util.Try

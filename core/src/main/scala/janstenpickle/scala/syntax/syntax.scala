@@ -6,14 +6,40 @@ import dispatch.{Http, Req}
 import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
-import janstenpickle.concurrent.result.AsyncResult
 import janstenpickle.vault.core.VaultConfig
+import uscala.concurrent.result.AsyncResult
 import uscala.result.Result
+import uscala.result.Result.{Fail, Ok}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 object catsconversion {
   implicit def toResult[A, B](xor: Xor[A, B]): Result[A, B] = xor.fold(Result.fail, Result.ok)
+
+
+  import cats.Applicative
+  import cats.syntax.cartesian._
+
+  type Shit[A] = Result[List[String], A]
+
+  implicit def validatedApplicative: Applicative[Shit] =
+    new Applicative[Shit] {
+      def ap[A, B](f: Shit[A => B])(fa: Shit[A]): Shit[B] =
+        (fa, f) match {
+          case (Ok(a), Ok(fab)) => Ok(fab(a))
+          case (Fail(e1), Fail(e2)) => Fail(e1 ++ e2)
+          case (Ok(_), i@Fail(_)) => i
+          case (i@Fail(_), Ok(_)) => i
+        }
+
+      def pure[A](x: A): Shit[A] = Result.ok(x)
+
+      override def product[A, B](fa: Shit[A],fb: Shit[B]): Shit[(A, B)] = ap(map(fa)(a => (b: B) => (a, b)))(fb)
+
+      override def map[A, B](fa: Shit[A])(f: A => B): Shit[B] = ap(pure(f))(fa)
+    }
+
+  val shit = (Result.fail[List[String], Int](List("sdfsf")) |@| Result.fail[List[String], Int](List("3423rwfef")) |@| Result.ok[List[String], String]("sdfsf")).map((x, y, z) => (x, y, z))
 }
 
 object option {

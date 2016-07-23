@@ -2,7 +2,7 @@ import sbt.Keys._
 
 name := "vault"
 
-lazy val uscalaVersion = "0.2.2"
+lazy val uscalaVersion = "0.3.1"
 lazy val specs2Version = "3.7.2"
 lazy val circeVersion = "0.4.1"
 
@@ -28,7 +28,7 @@ val pomInfo = (
 )
 
 lazy val commonSettings = Seq(
-  version := "0.3.0",
+  version := "0.3.1",
   scalaVersion := "2.11.8",
   organization := "janstenpickle.vault",
   pomExtra := pomInfo,
@@ -41,6 +41,7 @@ lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
     "net.databinder.dispatch" %% "dispatch-core" % "0.11.3",
     "org.uscala" %% "uscala-result" % uscalaVersion,
+    "org.uscala" %% "uscala-result-async" % uscalaVersion,
     "org.uscala" %% "uscala-result-specs2" % uscalaVersion % "it,test",
     "org.specs2" %% "specs2-core" % specs2Version % "it,test",
     "org.specs2" %% "specs2-scalacheck" % specs2Version % "it,test",

@@ -1,10 +1,10 @@
 package janstenpickle.vault.core
 
 import com.ning.http.client.Response
-import janstenpickle.concurrent.result.AsyncResult
 import janstenpickle.scala.syntax.request._
 import janstenpickle.scala.syntax.response._
 import janstenpickle.scala.syntax.vaultconfig._
+import uscala.concurrent.result.AsyncResult
 import uscala.result.Result
 
 import scala.concurrent.ExecutionContext

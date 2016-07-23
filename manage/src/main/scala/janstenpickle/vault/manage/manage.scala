@@ -3,13 +3,13 @@ package janstenpickle.vault.manage
 import com.ning.http.client.Response
 import io.circe.generic.auto._
 import io.circe.syntax._
-import janstenpickle.concurrent.result.AsyncResult
 import janstenpickle.scala.syntax.option._
 import janstenpickle.scala.syntax.request._
 import janstenpickle.scala.syntax.response._
 import janstenpickle.scala.syntax.vaultconfig._
 import janstenpickle.vault.core.VaultConfig
 import janstenpickle.vault.manage.Model._
+import uscala.concurrent.result.AsyncResult
 import uscala.result.Result
 
 import scala.concurrent.ExecutionContext

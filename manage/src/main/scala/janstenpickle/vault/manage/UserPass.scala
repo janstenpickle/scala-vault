@@ -1,12 +1,12 @@
 package janstenpickle.vault.manage
 
 import com.ning.http.client.Response
-import janstenpickle.concurrent.result.AsyncResult
 import janstenpickle.scala.syntax.option._
 import janstenpickle.scala.syntax.request._
 import janstenpickle.scala.syntax.response._
 import janstenpickle.scala.syntax.vaultconfig._
 import janstenpickle.vault.core.VaultConfig
+import uscala.concurrent.result.AsyncResult
 
 import scala.concurrent.ExecutionContext
 
