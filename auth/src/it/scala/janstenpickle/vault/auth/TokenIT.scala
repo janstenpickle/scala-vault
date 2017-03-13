@@ -1,9 +1,9 @@
 package janstenpickle.vault.auth
 
-import janstenpickle.scala.syntax.asyncresult._
-import janstenpickle.scala.syntax.vaultconfig._
-import janstenpickle.scala.syntax.response._
-import janstenpickle.scala.syntax.request._
+import janstenpickle.scala.syntax.CatsAsyncResult._
+import janstenpickle.scala.syntax.CatsVaultConfig._
+import janstenpickle.scala.syntax.CatsResponse._
+import janstenpickle.scala.syntax.CatsRequest._
 import janstenpickle.vault.core.VaultSpec
 import janstenpickle.vault.manage.Auth
 import org.scalacheck.{Gen, Prop}

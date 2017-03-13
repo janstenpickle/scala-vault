@@ -1,0 +1,24 @@
+#!/bin/bash
+
+set -euo pipefail
+
+NAME='vault-dev'
+VERSION='0.6.5'
+ROOT_TOKEN='vault-root-token'
+
+type 'docker' > /dev/null || error "No 'docker' found on system."
+
+if [ "$(docker ps -q -f name=$NAME)" ]; then
+    docker rm -f $NAME
+fi
+
+docker run -d --name=$NAME \
+    --cap-add=IPC_LOCK \
+    -e "VAULT_DEV_ROOT_TOKEN_ID=$ROOT_TOKEN" \
+    -e "VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200" \
+    -p 8200:8200 vault:$VERSION
+
+echo $ROOT_TOKEN > /tmp/.vault-token
+
+# wait for vault to start
+sleep 30

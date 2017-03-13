@@ -2,9 +2,9 @@ package janstenpickle.vault.core
 
 import java.net.URL
 
-import janstenpickle.scala.syntax.request._
-import janstenpickle.scala.syntax.response._
-import janstenpickle.scala.syntax.vaultconfig._
+import janstenpickle.scala.syntax.CatsRequest._
+import janstenpickle.scala.syntax.CatsResponse._
+import janstenpickle.scala.syntax.CatsVaultConfig._
 import org.scalacheck.Gen
 import org.specs2.Specification
 import org.specs2.specification.core.Fragments
@@ -24,30 +24,11 @@ trait VaultSpec extends Specification with ResultMatchers {
   lazy val adminToken = Source.fromFile("/tmp/.vault-token").mkString.trim
 
   lazy val rootConfig: VaultConfig = VaultConfig(WSClient(new URL("http://localhost:8200")), adminToken)
-  lazy val config = VaultConfig(rootConfig.wsClient, AppId(appId, userId))
+  lazy val config = rootConfig
   lazy val badTokenConfig = VaultConfig(rootConfig.wsClient, "face-off")
   lazy val badServerConfig = VaultConfig(WSClient(new URL("http://nic-cage.xyz")), "con-air")
 
-  def init = {
-    rootConfig.authenticatedRequest("sys/auth/app-id")(_.post(Map("type" -> "app-id"))).
-      execute.
-      acceptStatusCodes(200, 204).
-      attemptRun(_.getMessage())
-    rootConfig.
-      authenticatedRequest(s"auth/app-id/map/app-id/$appId")(_.post(Map("value" -> "root",
-                                                                        "display_name" -> appId))).
-      execute.
-      acceptStatusCodes(200, 204).
-      attemptRun(_.getMessage())
-    rootConfig.
-      authenticatedRequest(s"auth/app-id/map/user-id/$userId")(_.post(Map("value" -> appId))).
-      execute.
-      acceptStatusCodes(200, 204).
-      attemptRun(_.getMessage())
-  }
-
   override def map(fs: => Fragments) =
-    step(init) ^
     s2"""
       Can receive a token for an app ID ${config.token.attemptRun(_.getMessage) must beOk}
     """ ^

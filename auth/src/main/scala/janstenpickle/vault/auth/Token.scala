@@ -2,9 +2,9 @@ package janstenpickle.vault.auth
 
 import io.circe.generic.auto._
 import io.circe.syntax._
-import janstenpickle.scala.syntax.request._
-import janstenpickle.scala.syntax.response._
-import janstenpickle.scala.syntax.vaultconfig._
+import janstenpickle.scala.syntax.CatsRequest._
+import janstenpickle.scala.syntax.CatsResponse._
+import janstenpickle.scala.syntax.CatsVaultConfig._
 import janstenpickle.vault.core.VaultConfig
 import uscala.concurrent.result.AsyncResult
 
@@ -14,28 +14,44 @@ import scala.util.Try
 case class Token(config: VaultConfig) {
   import Token._
 
-  def lookupPath(path: String)(implicit ec: ExecutionContext): AsyncResult[String, LookupResponse] =
+  def lookupPath(path: String)
+  (implicit ec: ExecutionContext): AsyncResult[String, LookupResponse] =
     config.authenticatedRequest(path)(_.get).
       execute.
+      // scalastyle:off magic.number
       acceptStatusCodes(200).
+      // scalastyle:on magic.number
       extractFromJson[LookupResponse](_.downField("data"))
 
-  def lookup(token: String)(implicit ec: ExecutionContext): AsyncResult[String, LookupResponse] =
+  def lookup(token: String)
+  (implicit ec: ExecutionContext): AsyncResult[String, LookupResponse] =
     lookupPath(s"$Path/lookup/$token")
 
-  def lookupSelf(implicit ec: ExecutionContext): AsyncResult[String, LookupResponse] =
+  def lookupSelf(implicit ec: ExecutionContext):
+  AsyncResult[String, LookupResponse] =
     lookupPath(s"$Path/lookup-self")
 
-  def create(policies: Option[List[String]] = None,
-             meta: Option[Map[String, String]] = None,
-             noParent: Option[Boolean] = None,
-             noDefaultPolicy: Option[Boolean] = None,
-             ttl: Option[Int] = None,
-             numUses: Option[Int] = None)(implicit ec: ExecutionContext): AsyncResult[String, CreateResponse] =
+  def create(
+    policies: Option[List[String]] = None,
+    meta: Option[Map[String, String]] = None,
+    noParent: Option[Boolean] = None,
+    noDefaultPolicy: Option[Boolean] = None,
+    ttl: Option[Int] = None,
+    numUses: Option[Int] = None)(implicit ec: ExecutionContext
+    ): AsyncResult[String, CreateResponse] =
     config.authenticatedRequest(s"$Path/create")(
-      _.post(CreateRequest(policies, meta, noParent, noDefaultPolicy, ttl.map(x => s"${x}s"), numUses).asJson)
+      _.post(CreateRequest(
+        policies,
+        meta,
+        noParent,
+        noDefaultPolicy,
+        ttl.map(x => s"${x}s"),
+        numUses
+      ).asJson)
     ).execute.
+      // scalastyle:off magic.number
       acceptStatusCodes(200).
+      // scalastyle:on magic.number
       extractFromJson[CreateResponse](_.downField("auth"))
 }
 
@@ -68,7 +84,9 @@ case class LookupResponse(id: String,
   import LookupResponse._
 
   lazy val client: Option[String] =
-    meta.flatMap(_.get("client")).fold(Try(path.split(Separator)(1)).toOption)(Some(_))
+    meta.flatMap(_.get("client")).fold(
+      Try(path.split(Separator)(1)).toOption)(Some(_)
+    )
   lazy val username: Option[String] = meta.flatMap(_.get("username"))
 }
 

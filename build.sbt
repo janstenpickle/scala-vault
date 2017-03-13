@@ -5,6 +5,8 @@ name := "vault"
 lazy val uscalaVersion = "0.3.1"
 lazy val specs2Version = "3.7.2"
 lazy val circeVersion = "0.4.1"
+lazy val startVaultTask = TaskKey[Unit]("startVaultTask", "Start dev vault server for integration test")
+lazy val checkStyleBeforeCompile = TaskKey[Unit]("checkStyleBeforeCompile", "Check style before compile")
 
 val pomInfo = (
   <url>https://github.com/janstenpickle/scala-vault</url>
@@ -37,7 +39,7 @@ lazy val commonSettings = Seq(
   pomIncludeRepository := { _ => false },
   bintrayReleaseOnPublish := false,
   licenses += ("MIT", url("https://github.com/janstenpickle/scala-vault/blob/master/LICENSE")),
-  resolvers ++= Seq(Resolver.sonatypeRepo("releases"), "Bintray jcenter" at "https://jcenter.bintray.com/"),
+  resolvers ++= Seq(Resolver.sonatypeRepo("releases"), Resolver.jcenterRepo),
   libraryDependencies ++= Seq(
     "net.databinder.dispatch" %% "dispatch-core" % "0.11.3",
     "org.uscala" %% "uscala-result" % uscalaVersion,
@@ -66,8 +68,29 @@ lazy val commonSettings = Seq(
     "-deprecation",
     "-feature",
     "-language:implicitConversions"),
+  javacOptions in Compile ++= Seq(
+    "-source", "1.8",
+    "-target", "1.8",
+    "-Xlint:all"
+  ),
   testOptions in IntegrationTest ++= Seq( Tests.Argument("junitxml"), Tests.Argument("console") ),
-  unmanagedSourceDirectories in IntegrationTest += baseDirectory.value / "test" / "scala"
+  unmanagedSourceDirectories in IntegrationTest += baseDirectory.value / "test" / "scala",
+  // check style settings
+  checkStyleBeforeCompile :=
+  org.scalastyle.sbt.ScalastylePlugin.scalastyle.in(Compile).toTask("").value,
+  (compile in Compile) := (
+    (compile in Compile) dependsOn
+    checkStyleBeforeCompile
+  ).value,
+  // start vault settings
+  startVaultTask := {
+    import sys.process._
+    "./scripts/start_vault" !
+  },
+  (test in IntegrationTest) := (
+    (test in IntegrationTest) dependsOn
+    startVaultTask
+  ).value
 ) ++ Defaults.itSettings
 
 lazy val core = (project in file("core")).
