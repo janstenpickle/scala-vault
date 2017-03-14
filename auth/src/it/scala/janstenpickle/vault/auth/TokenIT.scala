@@ -18,7 +18,7 @@ class TokenIT extends VaultSpec with ScalaCheck {
 
   def is = step(setupUserAuth) ^
     s2"""
-      Can get info on the admin token $testAdminToken
+      Can get info on the root token $testAdminToken
       Can authenticate users who have client IDs $testAuth
       Fails to authenticate tokens which have expired $testExpiry
       """
@@ -29,7 +29,7 @@ class TokenIT extends VaultSpec with ScalaCheck {
   def setupUserAuth =
     authAdmin.enable("userpass", Some(clientId)).attemptRun(_.getMessage)
 
-  def testAdminToken = underTest.lookup(adminToken).attemptRun(_.getMessage) must beOk
+  def testAdminToken = underTest.lookup(rootToken).attemptRun(_.getMessage) must beOk
 
   def testAuth = testUserTokens(userGen(), (resp, user) => resp must beOk.
     like { case a =>

@@ -15,22 +15,33 @@ import scala.io.Source
 
 
 trait VaultSpec extends Specification with ResultMatchers {
-  implicit val errConverter: Throwable => String = _.getMessage
+  implicit val errConverter: Throwable ⇒ String = _.getMessage
   implicit val ec: ExecutionContext = ExecutionContext.global
 
-  val appId = "nic"
-  val userId = "cage"
+  lazy val rootToken = Source.fromFile("/tmp/.root-token").mkString.trim
+  lazy val roleId = Source.fromFile("/tmp/.role-id").mkString.trim
+  lazy val secretId = Source.fromFile("/tmp/.secret-id").mkString.trim
 
-  lazy val adminToken = Source.fromFile("/tmp/.vault-token").mkString.trim
+  lazy val rootConfig: VaultConfig = VaultConfig(
+    WSClient(new URL("http://localhost:8200")), rootToken
+  )
+  lazy val badTokenConfig = VaultConfig(
+    rootConfig.wsClient,
+    "face-off"
+  )
+  lazy val config = VaultConfig(
+    rootConfig.wsClient,
+    AppRole(roleId, secretId)
+  )
+  lazy val badServerConfig = VaultConfig(
+    WSClient(new URL("http://nic-cage.xyz")),
+    "con-air"
+  )
 
-  lazy val rootConfig: VaultConfig = VaultConfig(WSClient(new URL("http://localhost:8200")), adminToken)
-  lazy val config = rootConfig
-  lazy val badTokenConfig = VaultConfig(rootConfig.wsClient, "face-off")
-  lazy val badServerConfig = VaultConfig(WSClient(new URL("http://nic-cage.xyz")), "con-air")
-
-  override def map(fs: => Fragments) =
+  override def map(fs: ⇒ Fragments) =
     s2"""
-      Can receive a token for an app ID ${config.token.attemptRun(_.getMessage) must beOk}
+      Can receive a token for an AppRole
+      ${config.token.attemptRun(_.getMessage) must beOk}
     """ ^
     fs
 }
