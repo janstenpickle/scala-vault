@@ -16,7 +16,6 @@ class MountIT extends VaultSpec with ScalaCheck {
     s2"""
       Can enable, remount and disable a valid mount $happy
       Can enable, list and then disable valid mounts $listSuccess
-      Cannot disable an unmounted mount $disableFail
       Cannot enable an invalid mount type $enableFail
     """
 
@@ -41,11 +40,6 @@ class MountIT extends VaultSpec with ScalaCheck {
    }) and (processMountTypes((acc, mount) ⇒
      acc.flatMap(_ ⇒ underTest.delete(mount).attemptRun(_.getMessage()))
   ) must beOk)
-
-  def disableFail = Prop.forAllNoShrink(
-    mount, longerStrGen, Gen.option(longerStrGen))((`type`, mount, desc) ⇒
-      underTest.delete(mount).attemptRun(_.getMessage()) must beFail
-  )
 
   def enableFail = Prop.forAllNoShrink(
     longerStrGen.suchThat(!mountTypes.contains(_)),
@@ -73,11 +67,12 @@ object MountIT {
     ttl <- Gen.posNum[Int]
   } yield Mount(mountType, description, Some(MountConfig(ttl, ttl)))
 
-  def processMountTypes(op: (Result[String, Response], String)
-    ⇒ Result[String, Response]) =
-      mountTypes.foldLeft[Result[String, Response]](
-        Result.ok(new JDKResponse(null, null, null))
-      )(op)
+  def processMountTypes(
+    op: (Result[String, Response], String) ⇒ Result[String, Response]
+  ) =
+    mountTypes.foldLeft[Result[String, Response]](
+      Result.ok(new JDKResponse(null, null, null))
+    )(op)
 }
 
 

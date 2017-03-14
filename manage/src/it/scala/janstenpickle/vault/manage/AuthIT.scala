@@ -11,25 +11,23 @@ class AuthIT extends VaultSpec with ScalaCheck {
   def is =
     s2"""
       Can enable and disable valid auth mount $happy
-      Cannot disable an unmounted auth mount $disableFail
       Cannot enable an invalid auth type $enableFail
     """
 
   lazy val underTest = new Auth(config)
 
-  def happy = Prop.forAllNoShrink(backends, longerStrGen, Gen.option(longerStrGen))((backend, mount, desc) ⇒
-                                                                                      (underTest.enable(backend, Some(mount), desc).attemptRun(_.getMessage()) must beOk) and
-                                                                                      (underTest.disable(mount).attemptRun(_.getMessage()) must beOk)
+  def happy = Prop.forAllNoShrink(
+    backends, longerStrGen, Gen.option(longerStrGen))((backend, mount, desc) ⇒
+      (underTest.enable(backend, Some(mount), desc)
+      .attemptRun(_.getMessage()) must beOk) and
+      (underTest.disable(mount).attemptRun(_.getMessage()) must beOk)
   )
 
-  def disableFail = Prop.forAllNoShrink(backends, longerStrGen, Gen.option(longerStrGen))((backend, mount, desc) ⇒
-                                                                                            underTest.disable(mount).attemptRun(_.getMessage()) must beFail
-  )
-
-  def enableFail = Prop.forAllNoShrink(longerStrGen.suchThat(!backendNames.contains(_)),
-                                       longerStrGen,
-                                       Gen.option(longerStrGen))((backend, mount, desc) ⇒
-                                                                   underTest.enable(mount).attemptRun(_.getMessage()) must beFail
+  def enableFail = Prop.forAllNoShrink(
+    longerStrGen.suchThat(!backendNames.contains(_)),
+    longerStrGen,
+    Gen.option(longerStrGen))((backend, mount, desc) ⇒
+      underTest.enable(mount).attemptRun(_.getMessage()) must beFail
   )
 
 }

@@ -29,7 +29,8 @@ class TokenIT extends VaultSpec with ScalaCheck {
   def setupUserAuth =
     authAdmin.enable("userpass", Some(clientId)).attemptRun(_.getMessage)
 
-  def testAdminToken = underTest.lookup(rootToken).attemptRun(_.getMessage) must beOk
+  def testAdminToken =
+    underTest.lookup(rootToken).attemptRun(_.getMessage) must beOk
 
   def testAuth = testUserTokens(userGen(), (resp, user) ⇒ resp must beOk.
     like { case a ⇒
@@ -37,17 +38,24 @@ class TokenIT extends VaultSpec with ScalaCheck {
       a.client === Some(clientId) and
       (a.ttl must beLessThanOrEqualTo(user.getTtl))})
 
-  def testExpiry = testUserTokens(userGen(Gen.chooseNum[Int](1, 1)), (resp, user) ⇒ resp must beFail, Some(1500))
+  def testExpiry = testUserTokens(
+    userGen(Gen.chooseNum[Int](1, 1)),
+    (resp, user) ⇒ resp must beFail,
+    Some(1500)
+  )
 
-  def testUserTokens(userGen: Gen[User],
-                     test: (Result[String, LookupResponse], User) ⇒ MatchResult[Any],
-                     sleep: Option[Int] = None) =
+  def testUserTokens(
+    userGen: Gen[User],
+    test: (Result[String, LookupResponse], User) ⇒ MatchResult[Any],
+    sleep: Option[Int] = None) =
     Prop.forAllNoShrink(userGen) { user ⇒
-      val userCreation = rootConfig.authenticatedRequest(s"auth/$clientId/users/${user.username}")(
+      val userCreation = rootConfig
+        .authenticatedRequest(s"auth/$clientId/users/${user.username}")(
         _.post(user.asJson)
       ).execute.acceptStatusCodes(204).attemptRun must beOk
 
-      val userAuth = config.wsClient.path(s"auth/$clientId/login/${user.username}").
+      val userAuth = config.wsClient
+        .path(s"auth/$clientId/login/${user.username}").
         post(Map("username" -> user.username, "password" -> user.password)).
         toAsyncResult.
         acceptStatusCodes(200).
@@ -57,7 +65,11 @@ class TokenIT extends VaultSpec with ScalaCheck {
       sleep.foreach(Thread.sleep(_))
 
       userCreation and
-      (userAuth must beOk.like { case token ⇒ test(underTest.lookup(token).attemptRun(_.getMessage), user) })
+      (userAuth must beOk.like {
+        case token ⇒ test(
+          underTest.lookup(token).attemptRun(_.getMessage), user
+        )
+      })
     }
 
 }
@@ -67,7 +79,12 @@ object TokenIT {
 
   val clientId = "nic-cage"
 
-  case class User(username: String, password: String, ttl: String, max_ttl: String) {
+  case class User(
+    username: String,
+    password: String,
+    ttl: String,
+    max_ttl: String
+  ) {
     def getTtl: Int = ttl.dropRight(1).toInt
   }
 

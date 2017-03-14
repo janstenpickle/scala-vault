@@ -68,11 +68,13 @@ case class Policy(config: VaultConfig) {
       acceptStatusCodes(200).
       extractFromJson[List[String]](_.downField("policies"))
 
+  // TODO: fix inspect
   def inspect(policy: String)(implicit ec: ExecutionContext):
-  AsyncResult[String, PolicySetting] =
+  AsyncResult[String, List[String]] =
     config.authenticatedRequest(s"sys/policy/$policy")(_.get).
       execute.
-      acceptStatusCodes(200).extractFromJson[PolicySetting]()
+      acceptStatusCodes(200)
+      .extractFromJson[List[String]](_.downField("rules"))
 
   def set(policy: String, rules: List[Rule])
   (implicit ec: ExecutionContext): AsyncResult[String, Response] =
