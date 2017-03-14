@@ -9,7 +9,7 @@ ROOT_TOKEN='vault-root-token'
 type 'curl' > /dev/null || error "No 'curl' found on system."
 type 'docker' > /dev/null || error "No 'docker' found on system."
 
-if [ "$(docker ps -q -f name=$NAME)" ]; then
+if [ "$(docker ps -qa -f name=$NAME)" ]; then
     docker rm -f $NAME
 fi
 
