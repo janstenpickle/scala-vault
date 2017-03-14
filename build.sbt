@@ -2,9 +2,9 @@ import sbt.Keys._
 
 name := "vault"
 
-lazy val uscalaVersion = "0.3.1"
-lazy val specs2Version = "3.7.2"
-lazy val circeVersion = "0.4.1"
+lazy val uscalaVersion = "0.5.1"
+lazy val specs2Version = "3.8.8"
+lazy val circeVersion = "0.7.0"
 lazy val dispatchVersion = "0.11.3"
 lazy val startVaultTask = TaskKey[Unit](
   "startVaultTask",

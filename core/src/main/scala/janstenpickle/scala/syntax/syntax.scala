@@ -1,6 +1,5 @@
 package janstenpickle.scala.syntax
 
-import cats.data.Xor
 import com.ning.http.client.Response
 import dispatch.{Http, Req}
 import io.circe._
@@ -14,7 +13,7 @@ import uscala.result.Result.{Fail, Ok}
 import scala.concurrent.{ExecutionContext, Future}
 
 object CatsConversion {
-  implicit def toResult[A, B](xor: Xor[A, B]): Result[A, B] = xor.fold(
+  implicit def toResult[A, B](xor: Either[A, B]): Result[A, B] = xor.fold(
     Result.fail, Result.ok
   )
 
@@ -93,7 +92,7 @@ object CatsJson {
   import CatsConversion._
 
   implicit class JsonHandler(json: AsyncResult[String, Json]) {
-    def extractFromJson[T](jsonPath: HCursor ⇒ ACursor = _.acursor)
+    def extractFromJson[T](jsonPath: HCursor ⇒ ACursor = _.downArray)
     (
       implicit decode: Decoder[T],
       ec: ExecutionContext
@@ -129,7 +128,7 @@ object CatsResponse {
         parse(response.getResponseBody).leftMap(_.message)
       )
 
-    def extractFromJson[T](jsonPath: HCursor ⇒ ACursor = _.acursor)
+    def extractFromJson[T](jsonPath: HCursor ⇒ ACursor = _.downArray)
     (
       implicit decode: Decoder[T],
       ec: ExecutionContext
