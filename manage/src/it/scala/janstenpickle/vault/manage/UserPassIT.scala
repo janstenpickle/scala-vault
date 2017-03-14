@@ -19,7 +19,7 @@ class UserPassIT extends VaultSpec with ScalaCheck {
   lazy val authAdmin = Auth(config)
 
   def good = Prop.forAllNoShrink(longerStrGen, longerStrGen, longerStrGen, Gen.posNum[Int], longerStrGen, policyGen)(
-    (username, password, newPassword, ttl, client, policy) =>
+    (username, password, newPassword, ttl, client, policy) ⇒
       (authAdmin.enable("userpass", Some(client)).attemptRun(_.getMessage()) must beOk) and
       (underTest.create(username, password, ttl, None, client).attemptRun(_.getMessage()) must beOk) and
       (underTest.setPassword(username, newPassword, client).attemptRun(_.getMessage()) must beOk) and
@@ -29,7 +29,7 @@ class UserPassIT extends VaultSpec with ScalaCheck {
   )
 
   def badClient = Prop.forAllNoShrink(longerStrGen, longerStrGen, Gen.posNum[Int], longerStrGen)(
-    (username, password, ttl, client) =>
+    (username, password, ttl, client) ⇒
       underTest.create(username, password, ttl, None, client).attemptRun(_.getMessage()) must beFail
   )
 
@@ -38,7 +38,7 @@ class UserPassIT extends VaultSpec with ScalaCheck {
                                       Gen.posNum[Int],
                                       longerStrGen,
                                       Gen.listOf(longerStrGen.suchThat(!policies.contains(_))))(
-    (username, password, ttl, client, policy) =>
+    (username, password, ttl, client, policy) ⇒
       (authAdmin.enable("userpass", Some(client)).attemptRun(_.getMessage()) must beOk) and
       (underTest.create(username, password, ttl, Some(policy), client).attemptRun(_.getMessage()) must beOk) and
       (authAdmin.disable(client).attemptRun(_.getMessage()) must beOk)

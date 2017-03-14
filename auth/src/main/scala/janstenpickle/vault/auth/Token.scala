@@ -45,7 +45,7 @@ case class Token(config: VaultConfig) {
         meta,
         noParent,
         noDefaultPolicy,
-        ttl.map(x => s"${x}s"),
+        ttl.map(x ⇒ s"${x}s"),
         numUses
       ).asJson)
     ).execute.

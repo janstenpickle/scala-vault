@@ -31,18 +31,18 @@ class TokenIT extends VaultSpec with ScalaCheck {
 
   def testAdminToken = underTest.lookup(rootToken).attemptRun(_.getMessage) must beOk
 
-  def testAuth = testUserTokens(userGen(), (resp, user) => resp must beOk.
-    like { case a =>
+  def testAuth = testUserTokens(userGen(), (resp, user) ⇒ resp must beOk.
+    like { case a ⇒
       a.username === Some(user.username.toLowerCase) and
       a.client === Some(clientId) and
       (a.ttl must beLessThanOrEqualTo(user.getTtl))})
 
-  def testExpiry = testUserTokens(userGen(Gen.chooseNum[Int](1, 1)), (resp, user) => resp must beFail, Some(1500))
+  def testExpiry = testUserTokens(userGen(Gen.chooseNum[Int](1, 1)), (resp, user) ⇒ resp must beFail, Some(1500))
 
   def testUserTokens(userGen: Gen[User],
-                     test: (Result[String, LookupResponse], User) => MatchResult[Any],
+                     test: (Result[String, LookupResponse], User) ⇒ MatchResult[Any],
                      sleep: Option[Int] = None) =
-    Prop.forAllNoShrink(userGen) { user =>
+    Prop.forAllNoShrink(userGen) { user ⇒
       val userCreation = rootConfig.authenticatedRequest(s"auth/$clientId/users/${user.username}")(
         _.post(user.asJson)
       ).execute.acceptStatusCodes(204).attemptRun must beOk
@@ -57,7 +57,7 @@ class TokenIT extends VaultSpec with ScalaCheck {
       sleep.foreach(Thread.sleep(_))
 
       userCreation and
-      (userAuth must beOk.like { case token => test(underTest.lookup(token).attemptRun(_.getMessage), user) })
+      (userAuth must beOk.like { case token ⇒ test(underTest.lookup(token).attemptRun(_.getMessage), user) })
     }
 
 }

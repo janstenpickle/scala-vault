@@ -219,7 +219,7 @@ class TokenValidation(config: VaultConfig) {
   
   //only return the username, clientId and policies from the response
   def validate(userToken: String): AsyncResult[Option[ValidationResponse]] = 
-    token.validate(userToken).map(tr => 
+    token.validate(userToken).map(tr ⇒ 
       for {
         username <- tr.username
         clientId <- tr.client

@@ -30,14 +30,14 @@ class UserPassIT extends VaultSpec with ScalaCheck {
   def removeClient(client: String) =
     authAdmin.disable(client).attemptRun(_.getMessage()) must beOk
 
-  def authPass = test((username, password, client, ttl) =>
+  def authPass = test((username, password, client, ttl) ⇒
                         setupClient(client) and
     (setupUser(username, password, client) must beOk) and
                         (underTest.authenticate(username, password, ttl, client).attemptRun(_.getMessage()) must beOk) and
                         removeClient(client)
   )
 
-  def badClient = test{ (username, password, client, ttl) =>
+  def badClient = test{ (username, password, client, ttl) ⇒
     val badClient = "nic-kim-cage"
     setupClient(badClient) and
     (setupUser(username, password, client) must beFail) and
@@ -45,7 +45,7 @@ class UserPassIT extends VaultSpec with ScalaCheck {
     removeClient(badClient)
   }
 
-  def badUser = test{ (username, password, client, ttl) =>
+  def badUser = test{ (username, password, client, ttl) ⇒
     val badUser = "nic-kim-cage"
     setupClient(client) and
     (setupUser(username, password, client) must beOk) and
@@ -53,7 +53,7 @@ class UserPassIT extends VaultSpec with ScalaCheck {
     removeClient(client)
   }
 
-  def badPassword = test{ (username, password, client, ttl) =>
+  def badPassword = test{ (username, password, client, ttl) ⇒
     val badPassword = "nic-kim-cage"
     setupClient(client) and
     (setupUser(username, password, client) must beOk) and
@@ -61,6 +61,6 @@ class UserPassIT extends VaultSpec with ScalaCheck {
     removeClient(client)
   }
 
-  def test(op: (String, String, String, Int) => MatchResult[Any]) =
+  def test(op: (String, String, String, Int) ⇒ MatchResult[Any]) =
     Prop.forAllNoShrink(longerStrGen, longerStrGen, Gen.numStr.suchThat(_.nonEmpty), Gen.posNum[Int])(op)
 }
