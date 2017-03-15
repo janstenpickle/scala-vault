@@ -1,30 +1,34 @@
 machine:
   java:
-    version: oraclejdk8
+    version: openjdk8
   services:
     - docker
   environment:
-    SBT_VERSION: 0.13.11
+    SBT_VERSION: 0.13.13
     SBT_OPTS: "-Xms512M -Xmx1536M -Xss1M -XX:+CMSClassUnloadingEnabled"
 dependencies:
   cache_directories:
     - "~/.sbt"
   pre:
+    - sudo apt-get install jq
     - wget --output-document=$HOME/bin/sbt-launch.jar https://repo.typesafe.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/"$SBT_VERSION"/sbt-launch.jar
     - echo "java $SBT_OPTS -jar \`dirname \$0\`/sbt-launch.jar \"\$@\"" > $HOME/bin/sbt
     - chmod u+x $HOME/bin/sbt
     - which sbt
     - sbt sbt-version
-    - touch /tmp/.vault-token
-    - echo 'listener "tcp" { address = "0.0.0.0:9000" tls_disable = 1 }' > /tmp/vault.conf
-    - "docker run -d --expose 9000 -p 127.0.0.1:8200:9000 -v /tmp/vault.conf:/root/vault.conf -v /tmp/.vault-token:/root/.vault-token cgswong/vault:latest server -config /root/vault.conf -dev"
   override:
-    - cat /dev/null | sbt test:compile
-    - cat /dev/null | sbt it:compile
+    - cat /dev/null | sbt clean startVaultTask
+    - cat /dev/null | sbt coverage test:compile
+    - cat /dev/null | sbt coverage it:compile
 test:
   override:
-    - cat /dev/null | sbt test
-    - cat /dev/null | sbt it:test
+    - cat /dev/null | sbt coverage test
+    - cat /dev/null | sbt coverage it:test
+    - cat /dev/null | sbt coverageReport
   post:
-    - mkdir -p $CIRCLE_TEST_REPORTS/junit/
-    - find . -type f -regex ".*/target/test-reports/.*xml" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;
+    - mkdir -p $CIRCLE_ARTIFACTS/core/scala-2.11
+    - mv core/target/scala-2.11/scoverage-report $CIRCLE_ARTIFACTS/core/scala-2.11/scoverage-report
+    - mkdir -p $CIRCLE_ARTIFACTS/manage/scala-2.11
+    - mv manage/target/scala-2.11/scoverage-report $CIRCLE_ARTIFACTS/manage/scala-2.11/scoverage-report
+    - mkdir -p $CIRCLE_ARTIFACTS/auth/scala-2.11
+    - mv auth/target/scala-2.11/scoverage-report $CIRCLE_ARTIFACTS/auth/scala-2.11/scoverage-report
