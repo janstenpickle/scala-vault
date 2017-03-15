@@ -42,3 +42,5 @@ curl -X GET -H "X-Vault-Token:$ROOT_TOKEN" \
 curl -X POST -H "X-Vault-Token:$ROOT_TOKEN" \
     http://127.0.0.1:8200/v1/auth/approle/role/test-role/secret-id \
     | jq -r '.data.secret_id' > /tmp/.secret-id
+
+
