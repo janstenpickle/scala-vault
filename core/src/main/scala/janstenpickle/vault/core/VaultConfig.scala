@@ -13,13 +13,13 @@ import uscala.concurrent.result.AsyncResult
 import scala.concurrent.ExecutionContext
 
 case class VaultConfig(wsClient: WSClient, token: AsyncResult[String, String])
-@deprecated("vault deprecated AppId in favor of AppRole", "14/Mar/2017")
+@deprecated("vault deprecated AppId in favor of AppRole", "0.6.5")
 case class AppId(app_id: String, user_id: String)
 case class AppRole(role_id: String, secret_id: String)
 
 object VaultConfig {
 
-  @deprecated("vault deprecated AppId in favor of AppRole", "14/Mar/2017")
+  @deprecated("vault deprecated AppId in favor of AppRole", "0.6.5")
   def apply(client: WSClient, appId: AppId)
   (implicit ec: ExecutionContext): VaultConfig =
     VaultConfig(client,
