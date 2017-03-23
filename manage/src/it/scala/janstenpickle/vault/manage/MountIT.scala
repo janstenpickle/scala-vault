@@ -14,8 +14,7 @@ class MountIT extends VaultSpec with ScalaCheck {
 
   def is =
     s2"""
-      Can enable, remount and disable a valid mount $happy
-      Can enable, list and then disable valid mounts $listSuccess
+      Can enable, list, remount and disable a valid mount $happy
       Cannot enable an invalid mount type $enableFail
     """
 
@@ -30,16 +29,13 @@ class MountIT extends VaultSpec with ScalaCheck {
       .attemptRun(_.getMessage()) must beOk) and
       (underTest.remount(mountPoint, remountPoint)
       .attemptRun(_.getMessage()) must beOk) and
-      (underTest.delete(remountPoint).attemptRun(_.getMessage()) must beOk)
+      (underTest.list
+      .attemptRun(_.getMessage()) must beOk) and
+      (underTest.delete(remountPoint)
+      .attemptRun(_.getMessage()) must beOk) and
+      (underTest.delete(mountPoint)
+      .attemptRun(_.getMessage()) must beOk)
   )
-
-  def listSuccess = (processMountTypes((acc, mount) ⇒
-    acc.flatMap(_ ⇒ underTest.mount(mount).attemptRun(_.getMessage()))
-  ) must beOk) and (underTest.list.attemptRun(_.getMessage()) must beOk.like {
-     case a ⇒ a.map(_._2.`type`) must containAllOf(mountTypes)
-   }) and (processMountTypes((acc, mount) ⇒
-     acc.flatMap(_ ⇒ underTest.delete(mount).attemptRun(_.getMessage()))
-  ) must beOk)
 
   def enableFail = Prop.forAllNoShrink(
     longerStrGen.suchThat(!mountTypes.contains(_)),
@@ -65,14 +61,7 @@ object MountIT {
     mountType <- mount
     description <- Gen.option(longerStrGen)
     ttl <- Gen.posNum[Int]
-  } yield Mount(mountType, description, Some(MountConfig(ttl, ttl)))
+    noCache <- Gen.oneOf(true, false)
+  } yield Mount(mountType, description, Some(MountConfig(ttl, ttl, noCache)))
 
-  def processMountTypes(
-    op: (Result[String, Response], String) ⇒ Result[String, Response]
-  ) =
-    mountTypes.foldLeft[Result[String, Response]](
-      Result.ok(new JDKResponse(null, null, null))
-    )(op)
 }
-
-

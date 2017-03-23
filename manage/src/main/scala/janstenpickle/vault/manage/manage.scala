@@ -38,11 +38,14 @@ case class Mounts(config: VaultConfig) {
       _.post(Map("from" -> from, "to" -> to))
     ).execute.acceptStatusCodes(204)
 
+  // NOTE: list result doesn't map to `[MAP[String, Mount]]`
+  // https://www.vaultproject.io/api/system/mounts.html#sample-response
   def list(implicit ec: ExecutionContext):
-  AsyncResult[String, Map[String, Mount]] =
+  AsyncResult[String, String] =
     config.authenticatedRequest("sys/mounts")(_.get).
       execute.
-      acceptStatusCodes(200).extractFromJson[Map[String, Mount]]()
+      acceptStatusCodes(200).
+      map(_.getResponseBody)
 
   def mount(`type`: String,
             mountPoint: Option[String] = None,
@@ -97,7 +100,11 @@ object Model {
   case class Mount(`type`: String,
                    description: Option[String],
                    config: Option[MountConfig])
-  case class MountConfig(default_lease_ttl: Int, max_lease_ttl: Int)
+  case class MountConfig(
+    default_lease_ttl: Int,
+    max_lease_ttl: Int,
+    force_no_cache: Boolean
+  )
 
   case class PolicySetting(name: String, rules: Option[String]) {
     lazy val decodeRules: Option[Result[String, List[Rule]]] = rules.filter(
