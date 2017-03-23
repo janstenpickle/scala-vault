@@ -38,10 +38,11 @@ trait VaultSpec extends Specification with ResultMatchers {
     "con-air"
   )
 
+  def check = config.token.attemptRun(_.getMessage) must beOk
+
   override def map(fs: ⇒ Fragments) =
     s2"""
-      Can receive a token for an AppRole
-      ${config.token.attemptRun(_.getMessage) must beOk}
+      Can receive a token for an AppRole $check
     """ ^
     fs
 }
