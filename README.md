@@ -1,5 +1,4 @@
 # Vault Scala Library
-[![Circle CI](https://circleci.com/gh/janstenpickle/scala-vault.svg?style=svg)](https://circleci.com/gh/janstenpickle/scala-vault)
 
 Scala library for working with [Hashicorp Vault](https://www.vaultproject.io/).
 
