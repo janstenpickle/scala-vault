@@ -18,9 +18,9 @@ addSbtPlugin("me.lessis" % "bintray-sbt" % "0.3.0")
 Then add the following to your `build.sbt`
 ```scala
 resolvers += Resolver.bintrayRepo("janstenpickle", "maven")
-libraryDependencies += "janstenpickle.vault" %% "vault-core" % "0.3.1"
-libraryDependencies += "janstenpickle.vault" %% "vault-auth" % "0.3.1"
-libraryDependencies += "janstenpickle.vault" %% "vault-manage" % "0.3.1"
+libraryDependencies += "janstenpickle.vault" %% "vault-core" % "0.6.5"
+libraryDependencies += "janstenpickle.vault" %% "vault-auth" % "0.6.5"
+libraryDependencies += "janstenpickle.vault" %% "vault-manage" % "0.6.5"
 ```
 ## Usage
 Simple setup:
@@ -186,3 +186,9 @@ class UserAuth(wsClient: WSClient, ttl: Int) {
     userPass.authenticate(username, password, ttl, clientId).map(_.client_token)
 }
 ```
+
+## Develop `scala-vault`
+
+### Testing
+
+`sbt clean startVaultTask coverage test it:test coverageReport`
