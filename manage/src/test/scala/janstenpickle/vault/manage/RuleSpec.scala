@@ -14,13 +14,13 @@ class RuleSpec extends Specification with ScalaCheck with ResultMatchers {
       Cannot decode bad policy strings $fails
       """
 
-  def passes = Prop.forAllNoShrink(Gen.listOf(ruleGen).suchThat(_.nonEmpty)) (rules ⇒
+  def passes = Prop.forAllNoShrink(Gen.listOf(ruleGen).suchThat(_.nonEmpty)) (rules =>
     Rule.decode(rules.map(_.encode).mkString("\n")) must beOk.like {
-      case a ⇒ a must containAllOf(rules)
+      case a => a must containAllOf(rules)
     }
   )
 
-  def fails = Prop.forAllNoShrink(Gen.listOf(badRuleGen).suchThat(_.nonEmpty)) (rules ⇒
+  def fails = Prop.forAllNoShrink(Gen.listOf(badRuleGen).suchThat(_.nonEmpty)) (rules =>
     Rule.decode(rules.mkString("\n")) must beFail
   )
 }

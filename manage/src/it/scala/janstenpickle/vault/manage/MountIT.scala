@@ -24,7 +24,7 @@ class MountIT extends VaultSpec with ScalaCheck {
     mountGen,
     longerStrGen,
     longerStrGen,
-    Gen.option(longerStrGen))((mount, mountPoint, remountPoint, desc) ⇒
+    Gen.option(longerStrGen))((mount, mountPoint, remountPoint, desc) =>
       (underTest.mount(mount.`type`, Some(mountPoint), desc, Some(mount))
       .attemptRun(_.getMessage()) must beOk) and
       (underTest.remount(mountPoint, remountPoint)
@@ -40,7 +40,7 @@ class MountIT extends VaultSpec with ScalaCheck {
   def enableFail = Prop.forAllNoShrink(
     longerStrGen.suchThat(!mountTypes.contains(_)),
     longerStrGen,
-    Gen.option(longerStrGen))((`type`, mount, desc) ⇒
+    Gen.option(longerStrGen))((`type`, mount, desc) =>
       underTest.mount(`type`, Some(mount), desc)
         .attemptRun(_.getMessage()) must beFail
   )

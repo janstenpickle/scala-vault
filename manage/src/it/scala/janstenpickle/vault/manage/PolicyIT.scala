@@ -26,7 +26,7 @@ class PolicyIT extends VaultSpec with ScalaCheck {
   def happy = Prop.forAllNoShrink(
     longerStrGen,
     Gen.listOf(ruleGen(longerStrGen, policyGen, capabilitiesGen)).
-    suchThat(_.nonEmpty)) { (name, rules) ⇒
+    suchThat(_.nonEmpty)) { (name, rules) =>
       (underTest.set(name.toLowerCase, rules)
       .attemptRun(_.getMessage()) must beOk) and
       (underTest.inspect(name.toLowerCase)

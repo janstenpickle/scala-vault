@@ -13,7 +13,7 @@ import scala.concurrent.ExecutionContext
 case class Secrets(config: VaultConfig, backend: String) {
   def get(key: String, subKey: String = "value")
   (implicit ec: ExecutionContext): AsyncResult[String, String] =
-    getAll(key).flatMapR(x ⇒
+    getAll(key).flatMapR(x =>
       Result.fromOption(x.get(subKey),
       s"Cannot find sub-key $subKey in secret $key"))
 

@@ -17,7 +17,7 @@ class AuthIT extends VaultSpec with ScalaCheck {
   lazy val underTest = new Auth(config)
 
   def happy = Prop.forAllNoShrink(
-    backends, longerStrGen, Gen.option(longerStrGen))((backend, mount, desc) ⇒
+    backends, longerStrGen, Gen.option(longerStrGen))((backend, mount, desc) =>
       (underTest.enable(backend, Some(mount), desc)
       .attemptRun(_.getMessage()) must beOk) and
       (underTest.disable(mount).attemptRun(_.getMessage()) must beOk)
@@ -26,7 +26,7 @@ class AuthIT extends VaultSpec with ScalaCheck {
   def enableFail = Prop.forAllNoShrink(
     longerStrGen.suchThat(!backendNames.contains(_)),
     longerStrGen,
-    Gen.option(longerStrGen))((backend, mount, desc) ⇒
+    Gen.option(longerStrGen))((backend, mount, desc) =>
       underTest.enable(mount).attemptRun(_.getMessage()) must beFail
   )
 

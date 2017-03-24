@@ -15,7 +15,7 @@ import scala.io.Source
 
 
 trait VaultSpec extends Specification with ResultMatchers {
-  implicit val errConverter: Throwable ⇒ String = _.getMessage
+  implicit val errConverter: Throwable => String = _.getMessage
   implicit val ec: ExecutionContext = ExecutionContext.global
 
   lazy val rootToken = Source.fromFile("/tmp/.root-token").mkString.trim
@@ -40,7 +40,7 @@ trait VaultSpec extends Specification with ResultMatchers {
 
   def check = config.token.attemptRun(_.getMessage) must beOk
 
-  override def map(fs: ⇒ Fragments) =
+  override def map(fs: => Fragments) =
     s2"""
       Can receive a token for an AppRole $check
     """ ^

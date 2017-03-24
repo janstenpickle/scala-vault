@@ -25,12 +25,12 @@ object CatsConversion {
 
   implicit def validatedApplicative: Applicative[Shit] =
     new Applicative[Shit] {
-      def ap[A, B](f: Shit[A ⇒ B])(fa: Shit[A]): Shit[B] =
+      def ap[A, B](f: Shit[A => B])(fa: Shit[A]): Shit[B] =
         (fa, f) match {
-          case (Ok(a), Ok(fab)) ⇒ Ok(fab(a))
-          case (Fail(e1), Fail(e2)) ⇒ Fail(e1 ++ e2)
-          case (Ok(_), i@Fail(_)) ⇒ i
-          case (i@Fail(_), Ok(_)) ⇒ i
+          case (Ok(a), Ok(fab)) => Ok(fab(a))
+          case (Fail(e1), Fail(e2)) => Fail(e1 ++ e2)
+          case (Ok(_), i@Fail(_)) => i
+          case (i@Fail(_), Ok(_)) => i
         }
 
       def pure[A](x: A): Shit[A] = Result.ok(x)
@@ -38,22 +38,22 @@ object CatsConversion {
       override def product[A, B](
         fa: Shit[A],
         fb: Shit[B]
-      ): Shit[(A, B)] = ap(map(fa)(a ⇒ (b: B) ⇒ (a, b)))(fb)
+      ): Shit[(A, B)] = ap(map(fa)(a => (b: B) => (a, b)))(fb)
 
-      override def map[A, B](fa: Shit[A])(f: A ⇒ B): Shit[B] = ap(pure(f))(fa)
+      override def map[A, B](fa: Shit[A])(f: A => B): Shit[B] = ap(pure(f))(fa)
     }
 
   val shit = (
     Result.fail[List[String], Int](List("sdfsf")
   )
   |@| Result.fail[List[String], Int](List("3423rwfef"))
-  |@| Result.ok[List[String], String]("sdfsf")).map((x, y, z) ⇒ (x, y, z))
+  |@| Result.ok[List[String], String]("sdfsf")).map((x, y, z) => (x, y, z))
 }
 
 object CatsOption {
   implicit class ToTuple[T](opt: Option[T]) {
     def toMap(key: String): Map[String, T] =
-      opt.fold[Map[String, T]](Map.empty)(v ⇒ Map(key -> v))
+      opt.fold[Map[String, T]](Map.empty)(v => Map(key -> v))
   }
 }
 
@@ -80,9 +80,9 @@ object CatsVaultConfig {
   final val VaultTokenHeader = "X-Vault-Token"
 
   implicit class RequestHelper(config: VaultConfig) {
-    def authenticatedRequest(path: String)(req: Req ⇒ Req)
+    def authenticatedRequest(path: String)(req: Req => Req)
     (implicit ec: ExecutionContext): AsyncResult[String, Req] =
-      config.token.map[Req](token ⇒
+      config.token.map[Req](token =>
         req(config.wsClient.path(path).setHeader(VaultTokenHeader, token))
       )
   }
@@ -92,12 +92,12 @@ object CatsJson {
   import CatsConversion._
 
   implicit class JsonHandler(json: AsyncResult[String, Json]) {
-    def extractFromJson[T](jsonPath: HCursor ⇒ ACursor = _.downArray)
+    def extractFromJson[T](jsonPath: HCursor => ACursor = _.downArray)
     (
       implicit decode: Decoder[T],
       ec: ExecutionContext
     ): AsyncResult[String, T] =
-      json.flatMapR(j ⇒ decode.tryDecode(
+      json.flatMapR(j => decode.tryDecode(
         jsonPath(j.hcursor)
       ).leftMap(_.message))
   }
@@ -111,7 +111,7 @@ object CatsResponse {
     def acceptStatusCodes(codes: Int*)
     (implicit ec: ExecutionContext): AsyncResult[String, Response] =
       resp.flatMapR(
-        response ⇒
+        response =>
           if (codes.contains(response.getStatusCode)) {
             Result.ok(response)
           }
@@ -124,11 +124,11 @@ object CatsResponse {
       )
 
     def extractJson(implicit ec: ExecutionContext): AsyncResult[String, Json] =
-      resp.flatMapR(response ⇒
+      resp.flatMapR(response =>
         parse(response.getResponseBody).leftMap(_.message)
       )
 
-    def extractFromJson[T](jsonPath: HCursor ⇒ ACursor = _.downArray)
+    def extractFromJson[T](jsonPath: HCursor => ACursor = _.downArray)
     (
       implicit decode: Decoder[T],
       ec: ExecutionContext

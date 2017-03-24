@@ -52,7 +52,7 @@ lazy val commonSettings = Seq(
   pomExtra := pomInfo,
   autoAPIMappings := true,
   publishArtifact in Test := false,
-  pomIncludeRepository := { _ ⇒ false },
+  pomIncludeRepository := { _ => false },
   bintrayReleaseOnPublish := false,
   licenses += (
     "MIT",

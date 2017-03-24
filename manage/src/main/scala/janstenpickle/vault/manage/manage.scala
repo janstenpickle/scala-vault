@@ -119,11 +119,11 @@ object Model {
     capabilities: Option[List[String]] = None,
     policy: Option[String] = None
   ) {
-    lazy val encodeCapabilities = capabilities.filter(_.nonEmpty).map(caps ⇒
-      s"capabilities = [${caps.map(c ⇒ s""""$c"""").mkString(", ")}]"
+    lazy val encodeCapabilities = capabilities.filter(_.nonEmpty).map(caps =>
+      s"capabilities = [${caps.map(c => s""""$c"""").mkString(", ")}]"
     ).getOrElse("")
 
-    lazy val encodePolicy = policy.map(pol ⇒
+    lazy val encodePolicy = policy.map(pol =>
       s"""policy = "$pol""""
     ).getOrElse("")
 
@@ -141,8 +141,8 @@ object Model {
 
     def decode(ruleString: String): Result[String, List[Rule]] = {
       val rules = ruleString.split("""\s*}\s+\n""").toList
-      val decoded = rules.foldLeft(List.empty[Rule])( (acc, v) ⇒
-        acc ++ pathRegex.findFirstMatchIn(v).map(_.group(1)).map(path ⇒
+      val decoded = rules.foldLeft(List.empty[Rule])( (acc, v) =>
+        acc ++ pathRegex.findFirstMatchIn(v).map(_.group(1)).map(path =>
           Rule(
             path,
             capabilitiesRegex.findFirstMatchIn(v).map(_.group(1).split(',')
