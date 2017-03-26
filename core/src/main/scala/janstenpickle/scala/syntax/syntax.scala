@@ -12,7 +12,7 @@ import uscala.result.Result.{Fail, Ok}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object CatsConversion {
+object SyntaxConversion {
   implicit def toResult[A, B](xor: Either[A, B]): Result[A, B] = xor.fold(
     Result.fail, Result.ok
   )
@@ -50,14 +50,14 @@ object CatsConversion {
   |@| Result.ok[List[String], String]("sdfsf")).map((x, y, z) => (x, y, z))
 }
 
-object CatsOption {
+object SyntaxOption {
   implicit class ToTuple[T](opt: Option[T]) {
     def toMap(key: String): Map[String, T] =
       opt.fold[Map[String, T]](Map.empty)(v => Map(key -> v))
   }
 }
 
-object CatsAsyncResult {
+object SyntaxAsyncResult {
   implicit class FutureToAsyncResult[T](future: Future[T])
   (implicit ec: ExecutionContext) {
     def toAsyncResult: AsyncResult[String, T] = AsyncResult(
@@ -75,7 +75,7 @@ object CatsAsyncResult {
     future.toAsyncResult
 }
 
-object CatsVaultConfig {
+object SyntaxVaultConfig {
 
   final val VaultTokenHeader = "X-Vault-Token"
 
@@ -88,8 +88,8 @@ object CatsVaultConfig {
   }
 }
 
-object CatsJson {
-  import CatsConversion._
+object SyntaxJson {
+  import SyntaxConversion._
 
   implicit class JsonHandler(json: AsyncResult[String, Json]) {
     def extractFromJson[T](jsonPath: HCursor => ACursor = _.downArray)
@@ -103,9 +103,9 @@ object CatsJson {
   }
 }
 
-object CatsResponse {
-  import CatsConversion._
-  import CatsJson._
+object SyntaxResponse {
+  import SyntaxConversion._
+  import SyntaxJson._
 
   implicit class ResponseHandler(resp: AsyncResult[String, Response]) {
     def acceptStatusCodes(codes: Int*)
@@ -137,7 +137,7 @@ object CatsResponse {
   }
 }
 
-object CatsRequest {
+object SyntaxRequest {
 
   implicit class ExecuteRequest(req: AsyncResult[String, Req])
   (implicit ec: ExecutionContext) {

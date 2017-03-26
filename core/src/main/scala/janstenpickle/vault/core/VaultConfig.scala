@@ -5,9 +5,9 @@ import java.net.URL
 import dispatch.{Req, url}
 import io.circe.generic.auto._
 import io.circe.syntax._
-import janstenpickle.scala.syntax.CatsAsyncResult._
-import janstenpickle.scala.syntax.CatsRequest._
-import janstenpickle.scala.syntax.CatsResponse._
+import janstenpickle.scala.syntax.SyntaxAsyncResult._
+import janstenpickle.scala.syntax.SyntaxRequest._
+import janstenpickle.scala.syntax.SyntaxResponse._
 import uscala.concurrent.result.AsyncResult
 
 import scala.concurrent.ExecutionContext

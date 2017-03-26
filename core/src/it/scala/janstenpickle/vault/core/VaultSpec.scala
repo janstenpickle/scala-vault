@@ -2,9 +2,9 @@ package janstenpickle.vault.core
 
 import java.net.URL
 
-import janstenpickle.scala.syntax.CatsRequest._
-import janstenpickle.scala.syntax.CatsResponse._
-import janstenpickle.scala.syntax.CatsVaultConfig._
+import janstenpickle.scala.syntax.SyntaxRequest._
+import janstenpickle.scala.syntax.SyntaxResponse._
+import janstenpickle.scala.syntax.SyntaxVaultConfig._
 import org.scalacheck.Gen
 import org.specs2.Specification
 import org.specs2.specification.core.Fragments

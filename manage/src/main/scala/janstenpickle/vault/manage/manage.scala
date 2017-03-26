@@ -3,10 +3,10 @@ package janstenpickle.vault.manage
 import com.ning.http.client.Response
 import io.circe.generic.auto._
 import io.circe.syntax._
-import janstenpickle.scala.syntax.CatsOption._
-import janstenpickle.scala.syntax.CatsRequest._
-import janstenpickle.scala.syntax.CatsResponse._
-import janstenpickle.scala.syntax.CatsVaultConfig._
+import janstenpickle.scala.syntax.SyntaxOption._
+import janstenpickle.scala.syntax.SyntaxRequest._
+import janstenpickle.scala.syntax.SyntaxResponse._
+import janstenpickle.scala.syntax.SyntaxVaultConfig._
 import janstenpickle.vault.core.VaultConfig
 import janstenpickle.vault.manage.Model._
 import uscala.concurrent.result.AsyncResult

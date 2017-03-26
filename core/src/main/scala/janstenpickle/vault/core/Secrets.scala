@@ -1,9 +1,9 @@
 package janstenpickle.vault.core
 
 import com.ning.http.client.Response
-import janstenpickle.scala.syntax.CatsRequest._
-import janstenpickle.scala.syntax.CatsResponse._
-import janstenpickle.scala.syntax.CatsVaultConfig._
+import janstenpickle.scala.syntax.SyntaxRequest._
+import janstenpickle.scala.syntax.SyntaxResponse._
+import janstenpickle.scala.syntax.SyntaxVaultConfig._
 import uscala.concurrent.result.AsyncResult
 import uscala.result.Result
 
