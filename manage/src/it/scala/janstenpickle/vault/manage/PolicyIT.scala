@@ -18,11 +18,6 @@ class PolicyIT extends VaultSpec with ScalaCheck {
 
   lazy val underTest = Policy(config)
 
-
-  def cunt(shit: Option[Result[String, List[Rule]]]):
-    Result[String, List[Rule]] =
-    shit.fold[Result[String, List[Rule]]](Result.fail(""))(identity)
-
   def happy = Prop.forAllNoShrink(
     longerStrGen,
     Gen.listOf(ruleGen(longerStrGen, policyGen, capabilitiesGen)).

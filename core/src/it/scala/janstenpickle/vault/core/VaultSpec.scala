@@ -3,8 +3,8 @@ package janstenpickle.vault.core
 import java.net.URL
 
 import janstenpickle.scala.syntax.SyntaxRequest._
-import janstenpickle.scala.syntax.SyntaxResponse._
-import janstenpickle.scala.syntax.SyntaxVaultConfig._
+import janstenpickle.scala.syntax.ResponseSyntax._
+import janstenpickle.scala.syntax.VaultConfigSyntax._
 import org.scalacheck.Gen
 import org.specs2.Specification
 import org.specs2.specification.core.Fragments

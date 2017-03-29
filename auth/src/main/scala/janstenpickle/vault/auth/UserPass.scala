@@ -1,9 +1,9 @@
 package janstenpickle.vault.auth
 
 import io.circe.generic.auto._
-import janstenpickle.scala.syntax.SyntaxAsyncResult._
+import janstenpickle.scala.syntax.AsyncResultSyntax._
 import janstenpickle.scala.syntax.SyntaxRequest._
-import janstenpickle.scala.syntax.SyntaxResponse._
+import janstenpickle.scala.syntax.ResponseSyntax._
 import janstenpickle.vault.core.WSClient
 import uscala.concurrent.result.AsyncResult
 

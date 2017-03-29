@@ -1,10 +1,10 @@
 package janstenpickle.vault.manage
 
 import com.ning.http.client.Response
-import janstenpickle.scala.syntax.SyntaxOption._
+import janstenpickle.scala.syntax.OptionSyntax._
 import janstenpickle.scala.syntax.SyntaxRequest._
-import janstenpickle.scala.syntax.SyntaxResponse._
-import janstenpickle.scala.syntax.SyntaxVaultConfig._
+import janstenpickle.scala.syntax.ResponseSyntax._
+import janstenpickle.scala.syntax.VaultConfigSyntax._
 import janstenpickle.vault.core.VaultConfig
 import uscala.concurrent.result.AsyncResult
 

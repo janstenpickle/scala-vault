@@ -1,0 +1,24 @@
+sudo: required
+
+language: scala
+
+services:
+  - docker
+
+scala:
+  - 2.11.8
+
+jdk: oraclejdk8
+
+cache:
+  directories:
+   - ~/.ivy2
+   - ~/.sbt
+
+before_install:
+  - bash scripts/start_vault
+
+script:
+  - sbt scalastyle
+  - sbt test
+  - sbt it:test

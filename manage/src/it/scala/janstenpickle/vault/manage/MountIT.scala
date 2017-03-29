@@ -70,8 +70,10 @@ object MountIT {
   val mountGen = for {
     mountType <- mount
     description <- Gen.option(longerStrGen)
-    ttl <- Gen.posNum[Int]
-  } yield Mount(mountType, description, Some(MountConfig(ttl, ttl)))
+    defaultTtl <- Gen.option(Gen.posNum[Int])
+    maxTtl <- Gen.option(Gen.posNum[Int])
+    forceNoCache <- Gen.option(Gen.oneOf(true, false))
+  } yield Mount(mountType, description, Some(MountConfig(defaultTtl, maxTtl, forceNoCache)))
 
   def processMountTypes(op: (Result[String, Response], String) => Result[String,
     Response]) =

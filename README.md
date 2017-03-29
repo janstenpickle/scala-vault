@@ -1,5 +1,7 @@
 # Vault Scala Library
 
+[![Build Status](https://travis-ci.org/janstenpickle/scala-vault.svg?branch=master)](https://travis-ci.org/janstenpickle/scala-vault)
+
 Scala library for working with [Hashicorp Vault](https://www.vaultproject.io/).
 
 This library has three modules:
