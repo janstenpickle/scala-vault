@@ -20,9 +20,9 @@ addSbtPlugin("me.lessis" % "bintray-sbt" % "0.3.0")
 Then add the following to your `build.sbt`
 ```scala
 resolvers += Resolver.bintrayRepo("janstenpickle", "maven")
-libraryDependencies += "janstenpickle.vault" %% "vault-core" % "0.6.5"
-libraryDependencies += "janstenpickle.vault" %% "vault-auth" % "0.6.5"
-libraryDependencies += "janstenpickle.vault" %% "vault-manage" % "0.6.5"
+libraryDependencies += "janstenpickle.vault" %% "vault-core" % "0.4.0"
+libraryDependencies += "janstenpickle.vault" %% "vault-auth" % "0.4.0"
+libraryDependencies += "janstenpickle.vault" %% "vault-manage" % "0.4.0"
 ```
 ## Usage
 Simple setup:
