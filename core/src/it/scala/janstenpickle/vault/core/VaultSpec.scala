@@ -2,9 +2,9 @@ package janstenpickle.vault.core
 
 import java.net.URL
 
-import janstenpickle.scala.syntax.request._
-import janstenpickle.scala.syntax.response._
-import janstenpickle.scala.syntax.vaultconfig._
+import janstenpickle.scala.syntax.SyntaxRequest._
+import janstenpickle.scala.syntax.ResponseSyntax._
+import janstenpickle.scala.syntax.VaultConfigSyntax._
 import org.scalacheck.Gen
 import org.specs2.Specification
 import org.specs2.specification.core.Fragments
@@ -18,38 +18,31 @@ trait VaultSpec extends Specification with ResultMatchers {
   implicit val errConverter: Throwable => String = _.getMessage
   implicit val ec: ExecutionContext = ExecutionContext.global
 
-  val appId = "nic"
-  val userId = "cage"
+  lazy val rootToken = Source.fromFile("/tmp/.root-token").mkString.trim
+  lazy val roleId = Source.fromFile("/tmp/.role-id").mkString.trim
+  lazy val secretId = Source.fromFile("/tmp/.secret-id").mkString.trim
 
-  lazy val adminToken = Source.fromFile("/tmp/.vault-token").mkString.trim
+  lazy val rootConfig: VaultConfig = VaultConfig(
+    WSClient(new URL("http://localhost:8200")), rootToken
+  )
+  lazy val badTokenConfig = VaultConfig(
+    rootConfig.wsClient,
+    "face-off"
+  )
+  lazy val config = VaultConfig(
+    rootConfig.wsClient,
+    AppRole(roleId, secretId)
+  )
+  lazy val badServerConfig = VaultConfig(
+    WSClient(new URL("http://nic-cage.xyz")),
+    "con-air"
+  )
 
-  lazy val rootConfig: VaultConfig = VaultConfig(WSClient(new URL("http://localhost:8200")), adminToken)
-  lazy val config = VaultConfig(rootConfig.wsClient, AppId(appId, userId))
-  lazy val badTokenConfig = VaultConfig(rootConfig.wsClient, "face-off")
-  lazy val badServerConfig = VaultConfig(WSClient(new URL("http://nic-cage.xyz")), "con-air")
-
-  def init = {
-    rootConfig.authenticatedRequest("sys/auth/app-id")(_.post(Map("type" -> "app-id"))).
-      execute.
-      acceptStatusCodes(200, 204).
-      attemptRun(_.getMessage())
-    rootConfig.
-      authenticatedRequest(s"auth/app-id/map/app-id/$appId")(_.post(Map("value" -> "root",
-                                                                        "display_name" -> appId))).
-      execute.
-      acceptStatusCodes(200, 204).
-      attemptRun(_.getMessage())
-    rootConfig.
-      authenticatedRequest(s"auth/app-id/map/user-id/$userId")(_.post(Map("value" -> appId))).
-      execute.
-      acceptStatusCodes(200, 204).
-      attemptRun(_.getMessage())
-  }
+  def check = config.token.attemptRun(_.getMessage) must beOk
 
   override def map(fs: => Fragments) =
-    step(init) ^
     s2"""
-      Can receive a token for an app ID ${config.token.attemptRun(_.getMessage) must beOk}
+      Can receive a token for an AppRole $check
     """ ^
     fs
 }

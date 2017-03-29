@@ -1,5 +1,6 @@
 # Vault Scala Library
-[![Circle CI](https://circleci.com/gh/janstenpickle/scala-vault.svg?style=svg)](https://circleci.com/gh/janstenpickle/scala-vault)
+
+[![Build Status](https://travis-ci.org/janstenpickle/scala-vault.svg?branch=master)](https://travis-ci.org/janstenpickle/scala-vault)
 
 Scala library for working with [Hashicorp Vault](https://www.vaultproject.io/).
 
@@ -19,22 +20,22 @@ addSbtPlugin("me.lessis" % "bintray-sbt" % "0.3.0")
 Then add the following to your `build.sbt`
 ```scala
 resolvers += Resolver.bintrayRepo("janstenpickle", "maven")
-libraryDependencies += "janstenpickle.vault" %% "vault-core" % "0.3.1"
-libraryDependencies += "janstenpickle.vault" %% "vault-auth" % "0.3.1"
-libraryDependencies += "janstenpickle.vault" %% "vault-manage" % "0.3.1"
+libraryDependencies += "janstenpickle.vault" %% "vault-core" % "0.6.5"
+libraryDependencies += "janstenpickle.vault" %% "vault-auth" % "0.6.5"
+libraryDependencies += "janstenpickle.vault" %% "vault-manage" % "0.6.5"
 ```
 ## Usage
 Simple setup:
 ```scala
 import java.net.URL
 
-import janstenpickle.vault.core.AppId
+import janstenpickle.vault.core.AppRole
 import janstenpickle.vault.core.VaultConfig
 import janstenpickle.vault.core.WSClient
 
 val config = VaultConfig(WSClient(new URL("https://localhost:8200")), "token")
 
-val appIdConfig = VaultConfig(WSClient(new URL("https://localhost:8200")), AppId("appId", "userId"))
+val appRoleConfig = VaultConfig(WSClient(new URL("https://localhost:8200")), AppRole("roleId", "secretId"))
 ```
 ### WSClient
 This library uses the [Dispatch](http://dispatch.databinder.net/Dispatch.html), a lightweight async HTTP client to communicate with Vault.
@@ -46,13 +47,13 @@ All responses from Vault are wrapped in an asynchronous [Result](http://github.c
 ```scala
 import java.net.URL
 
-import janstenpickle.vault.core.AppId
+import janstenpickle.vault.core.AppRole
 import janstenpickle.vault.core.VaultConfig
 import janstenpickle.vault.core.WSClient
 import janstenpickle.vault.core.Secrets
 
 
-val config = VaultConfig(WSClient(new URL("https://localhost:8200")), AppId("appId", "userId"))
+val config = VaultConfig(WSClient(new URL("https://localhost:8200")), AppRole("roleId", "secretId"))
 
 val secrets = Secrets(config, "secret")
 ```
@@ -104,39 +105,19 @@ This requires that `userpass` authentication has been enabled on separate path t
 val response = userPass.authenticate("username", "password", ttl, "clientId")
 ```
 
-### Validating a Token
-```scala
-import java.net.URL
-
-import janstenpickle.vault.core.AppId
-import janstenpickle.vault.core.VaultConfig
-import janstenpickle.vault.core.WSClient
-import janstenpickle.vault.auth.Token
-
-
-val config = VaultConfig(WSClient(new URL("https://localhost:8200")), AppId("appId", "userId"))
-
-val token = Token(config)
-
-val response = token.validate("some_vault_token")
-```
-The [response](auth/src/main/scala/janstenpickle/vault/auth/Token.scala#L22-L30) will contain the fields as per the lookup response in the [Vault documentation](https://www.vaultproject.io/docs/auth/token.html)
-
-The token response will also have optional `username` and `client` values which are provided as best effort. If the token was obtained by using `userpass` authentication then they will be present. The `client` value will first look in the metadata for a client key and fallback to a section of the `path` value, whereas the `username` value will just look in the metadata.
-
 ## Managing Vault
 This library also provides some limited management functionality for Vault around authenctiation, mounts and policy.
 ### Authentication Management
 ```scala
 import java.net.URL
 
-import janstenpickle.vault.core.AppId
+import janstenpickle.vault.core.AppRole
 import janstenpickle.vault.core.VaultConfig
 import janstenpickle.vault.core.WSClient
 import janstenpickle.vault.manage.Auth
 
 
-val config = VaultConfig(WSClient(new URL("https://localhost:8200")), AppId("appId", "userId"))
+val config = VaultConfig(WSClient(new URL("https://localhost:8200")), AppRole("roleId", "secretId"))
 
 val auth = Auth(config)
 
@@ -152,7 +133,7 @@ val response = auth.enable("auth_type", Some("client_id"), Some("description"))
 ```
 
 
-# Example Usage - Multitenant Token Authentication Service
+# Example Usage - Multitenant Authentication Service
 Using this library it is very simple to set up a token authentication service for ReST API authentication made up of three components:
 
 * Vault
@@ -163,7 +144,7 @@ The sequence diagram below shows how this may be constructed:
 
 ![Auth Sequence](https://i.imgur.com/nu6Gs77.png)
 
-### Code Examples for Token Authentication Service
+### Code Examples for Authentication Service
 
 The exmaples below show how clients can be set up, users authenticated and tokens validated:
 
@@ -185,11 +166,11 @@ import janstenpickle.vault.manage.UserPass
 
 class UserAdmin(config: VaultConfig, ttl: Int) {
   val userPass = UserPass(config)
-  def create(username: String, password: String, clientId: String, policies: Option[List[String]] = None): AsyncResult[WSResponse] = 
+  def create(username: String, password: String, clientId: String, policies: Option[List[String]] = None): AsyncResult[WSResponse] =
     userPass.create(username, password, ttl, policies, clientId)
   def setPassword(username: String, password: String, clientId: String): AsyncResult[WSResponse] =
     userPass.setPassword(username, password, clientId)
-  def setPoliciesUsername: String, policies: List[String], clientId: String): AsyncResult[WSResponse] = 
+  def setPoliciesUsername: String, policies: List[String], clientId: String): AsyncResult[WSResponse] =
     userPass.setPolicies(username, policies, clientId)
   def delete(username, clientId: String): AsyncResult[WSResponse] = userPass.delete(username, clientId)
 }
@@ -201,29 +182,15 @@ import janstenpickle.vault.manage.Auth
 
 class UserAuth(wsClient: WSClient, ttl: Int) {
   val userPass = UserPass(wsClient)
-  
+
   // returns only the token
   def auth(username: String, password: String, clientId: String): AsyncResult[String] =
     userPass.authenticate(username, password, ttl, clientId).map(_.client_token)
 }
 ```
-#### Token Validation
-```scala
-import janstenpickle.vault.core.VaultConfig
-import janstenpickle.vault.manage.Auth
 
-case class ValidationRepsonse(username: String, clientId: String, policies: Option[List[String]])
+## Develop `scala-vault`
 
-class TokenValidation(config: VaultConfig) {
-  val token = Token(config)
-  
-  //only return the username, clientId and policies from the response
-  def validate(userToken: String): AsyncResult[Option[ValidationResponse]] = 
-    token.validate(userToken).map(tr => 
-      for {
-        username <- tr.username
-        clientId <- tr.client
-      } yield ValidationRepsonse(username, clientId, tr.policies)
-    )
-}
-```
+### Testing
+
+`sbt clean startVaultTask coverage test it:test coverageReport`

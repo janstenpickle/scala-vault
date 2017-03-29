@@ -18,32 +18,37 @@ class PolicyIT extends VaultSpec with ScalaCheck {
 
   lazy val underTest = Policy(config)
 
-
-  def cunt(shit: Option[Result[String, List[Rule]]]): Result[String, List[Rule]] =
-    shit.fold[Result[String, List[Rule]]](Result.fail(""))(identity)
-
-  def happy = Prop.forAllNoShrink(longerStrGen,
-                                  Gen.listOf(ruleGen(longerStrGen, policyGen, capabilitiesGen)).
-                                   suchThat(_.nonEmpty)) { (name, rules) =>
-    (underTest.set(name.toLowerCase, rules).attemptRun(_.getMessage()) must beOk) and
-    (underTest.inspect(name.toLowerCase).attemptRun(_.getMessage()).flatMap(
-      _.decodeRules.fold[Result[String, List[Rule]]](Result.fail(""))(identity)
-    ) must beOk.like { case a => a must containTheSameElementsAs(rules) }) and
-    (underTest.delete(name.toLowerCase).attemptRun(_.getMessage()) must beOk)
+  def happy = Prop.forAllNoShrink(
+    longerStrGen,
+    Gen.listOf(ruleGen(longerStrGen, policyGen, capabilitiesGen)).
+    suchThat(_.nonEmpty)) { (name, rules) =>
+      (underTest.set(name.toLowerCase, rules)
+      .attemptRun(_.getMessage()) must beOk) and
+      (underTest.inspect(name.toLowerCase)
+      .attemptRun(_.getMessage()) must beOk) and
+      (underTest.delete(name.toLowerCase).attemptRun(_.getMessage()) must beOk)
   }
 
-  // cannot use generated values here as vault seems to have a failure rate limit
-  def sad = underTest.set("nic", List(Rule("cage", Some(List("kim", "copolla"))))).attemptRun(_.getMessage()) must beFail
+  // cannot use generated values here as
+  // vault seems to have a failure rate limit
+  def sad = underTest.set(
+    "nic", List(Rule("cage", Some(List("kim", "copolla"))))
+  ).attemptRun(_.getMessage()) must beFail
 }
 
 object PolicyIT {
   val policyGen = Gen.option(Gen.oneOf("read", "write", "sudo", "deny"))
   val capabilitiesGen =
-    Gen.listOf(Gen.oneOf("create", "read", "update", "delete", "list", "sudo", "deny")).
+    Gen.listOf(Gen.oneOf(
+      "create", "read", "update", "delete", "list", "sudo", "deny")).
       suchThat(_.nonEmpty).
       map(_.distinct)
 
-  def ruleGen(pathGen: Gen[String], polGen: Gen[Option[String]], capGen: Gen[List[String]]) = for {
+  def ruleGen(
+    pathGen: Gen[String],
+    polGen: Gen[Option[String]],
+    capGen: Gen[List[String]]
+  ) = for {
     path <- pathGen
     policy <- polGen
     capabilities <- capGen
