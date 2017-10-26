@@ -22,15 +22,6 @@ lazy val checkStyleBeforeCompile = TaskKey[Unit](
 
 val pomInfo = (
   <url>https://github.com/janstenpickle/scala-vault</url>
-  <licenses>
-    <license>
-      <name>The MIT License (MIT)</name>
-      <url>
-        https://github.com/janstenpickle/scala-vault/blob/master/LICENSE
-      </url>
-      <distribution>repo</distribution>
-    </license>
-  </licenses>
   <scm>
     <url>git@github.com:janstenpickle/scala-vault.git</url>
     <connection>
@@ -46,7 +37,7 @@ val pomInfo = (
 )
 
 lazy val commonSettings = Seq(
-  version := "0.4.0",
+  version := "0.4.1-SNAPSHOT",
   scalaVersion := "2.11.8",
   organization := "janstenpickle.vault",
   pomExtra := pomInfo,
