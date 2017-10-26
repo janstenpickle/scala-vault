@@ -170,9 +170,9 @@ class UserAdmin(config: VaultConfig, ttl: Int) {
     userPass.create(username, password, ttl, policies, clientId)
   def setPassword(username: String, password: String, clientId: String): AsyncResult[WSResponse] =
     userPass.setPassword(username, password, clientId)
-  def setPoliciesUsername: String, policies: List[String], clientId: String): AsyncResult[WSResponse] =
+  def setPolicies(username: String, policies: List[String], clientId: String): AsyncResult[WSResponse] =
     userPass.setPolicies(username, policies, clientId)
-  def delete(username, clientId: String): AsyncResult[WSResponse] = userPass.delete(username, clientId)
+  def delete(username: String, clientId: String): AsyncResult[WSResponse] = userPass.delete(username, clientId)
 }
 ```
 #### User Authentication
