@@ -37,8 +37,8 @@ val pomInfo = (
 )
 
 lazy val commonSettings = Seq(
-  version := "0.4.1-SNAPSHOT",
-  scalaVersion := "2.11.8",
+  version := "0.4.1",
+  scalaVersion := "2.11.11",
   organization := "janstenpickle.vault",
   pomExtra := pomInfo,
   autoAPIMappings := true,
