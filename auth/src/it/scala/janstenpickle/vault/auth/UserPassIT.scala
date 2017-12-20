@@ -6,6 +6,7 @@ import org.scalacheck.{Gen, Prop}
 import org.specs2.ScalaCheck
 import org.specs2.matcher.MatchResult
 
+//noinspection ScalaStyle
 class UserPassIT extends VaultSpec with ScalaCheck {
   import VaultSpec._
 

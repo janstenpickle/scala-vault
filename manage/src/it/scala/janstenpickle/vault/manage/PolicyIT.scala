@@ -4,7 +4,6 @@ import janstenpickle.vault.core.VaultSpec
 import janstenpickle.vault.manage.Model.Rule
 import org.scalacheck.{Gen, Prop}
 import org.specs2.ScalaCheck
-import uscala.result.Result
 
 class PolicyIT extends VaultSpec with ScalaCheck {
   import PolicyIT._
@@ -20,8 +19,8 @@ class PolicyIT extends VaultSpec with ScalaCheck {
 
   def happy = Prop.forAllNoShrink(
     longerStrGen,
-    Gen.listOf(ruleGen(longerStrGen, policyGen, capabilitiesGen)).
-    suchThat(_.nonEmpty)) { (name, rules) =>
+    Gen.listOf(ruleGen(longerStrGen, policyGen, capabilitiesGen))
+      .suchThat(_.nonEmpty)) { (name, rules) =>
       (underTest.set(name.toLowerCase, rules)
       .attemptRun(_.getMessage()) must beOk) and
       (underTest.inspect(name.toLowerCase)
@@ -40,9 +39,9 @@ object PolicyIT {
   val policyGen = Gen.option(Gen.oneOf("read", "write", "sudo", "deny"))
   val capabilitiesGen =
     Gen.listOf(Gen.oneOf(
-      "create", "read", "update", "delete", "list", "sudo", "deny")).
-      suchThat(_.nonEmpty).
-      map(_.distinct)
+      "create", "read", "update", "delete", "list", "sudo", "deny"))
+      .suchThat(_.nonEmpty)
+      .map(_.distinct)
 
   def ruleGen(
     pathGen: Gen[String],

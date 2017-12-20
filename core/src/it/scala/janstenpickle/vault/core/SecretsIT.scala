@@ -69,8 +69,8 @@ trait SecretsTests extends VaultSpec with ScalaCheck {
     })
   }
 
-  def failGet = good.get("john").attemptRun(_.getMessage()) must beFail.
-    like { case err =>
+  def failGet = good.get("john").attemptRun(_.getMessage()) must beFail
+    .like { case err =>
       err must contain("Received failure response from server: 404")
     }
 

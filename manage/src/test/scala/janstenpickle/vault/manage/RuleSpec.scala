@@ -28,9 +28,9 @@ class RuleSpec extends Specification with ScalaCheck with ResultMatchers {
 object RuleSpec {
   val policyGen = Gen.option(Gen.oneOf("read", "write", "sudo", "deny"))
   val capabilitiesGen = Gen.option(
-    Gen.listOf(Gen.oneOf("create", "read", "update", "delete", "list", "sudo", "deny")).
-      suchThat(_.nonEmpty).
-      map(_.distinct)
+    Gen.listOf(Gen.oneOf("create", "read", "update", "delete", "list", "sudo", "deny"))
+      .suchThat(_.nonEmpty)
+      .map(_.distinct)
   )
 
   val ruleGen = for {
