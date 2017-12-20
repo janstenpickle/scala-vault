@@ -34,7 +34,9 @@ object AsyncResultSyntax {
 
   implicit class ReqToAsyncResult(req: Req)
   (implicit ec: ExecutionContext) {
-    def toAsyncResult: AsyncResult[String, Response] = Http(req).toAsyncResult
+    def toAsyncResult: AsyncResult[String, Response] =
+      Http(req)
+        .toAsyncResult
   }
 
   implicit def toAsyncResult[T](future: scala.concurrent.Future[T])
@@ -109,7 +111,7 @@ object SyntaxRequest {
   implicit class ExecuteRequest(req: AsyncResult[String, Req])
   (implicit ec: ExecutionContext) {
     def execute: AsyncResult[String, Response] =
-      req.flatMapF(Http(_))
+      req.flatMapF(Http.apply)
   }
 
   implicit class HttpOps(req: Req) {
