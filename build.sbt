@@ -5,9 +5,9 @@ import org.scalastyle.sbt._
 name := "vault"
 
 lazy val uscalaVersion = "0.5.1"
-lazy val specs2Version = "3.8.9"
+lazy val specs2Version = "3.9.5"
 lazy val circeVersion = "0.7.1"
-lazy val dispatchVersion = "0.11.4"
+lazy val dispatchVersion = "0.13.2"
 lazy val startVaultTask = TaskKey[Unit](
   "startVaultTask",
   "Start dev vault server for integration test"
@@ -42,6 +42,7 @@ lazy val commonSettings = Seq(
   resolvers += Resolver.bintrayRepo("albertpastrana", "maven"),
   version := "0.4.2-SNAPSHOT",
   scalaVersion := "2.11.12",
+  crossScalaVersions := Seq( "2.11.12", "2.12.4"),
   organization := "janstenpickle.vault",
   pomExtra := pomInfo,
   autoAPIMappings := true,

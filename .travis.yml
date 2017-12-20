@@ -7,6 +7,7 @@ services:
 
 scala:
   - 2.11.12
+  - 2.12.4
 
 jdk: oraclejdk8
 
@@ -19,6 +20,6 @@ before_install:
   - bash scripts/start_vault
 
 script:
-  - sbt scalastyle
-  - sbt test
-  - sbt it:test
+  - sbt ++$TRAVIS_SCALA_VERSION scalastyle
+  - sbt ++$TRAVIS_SCALA_VERSION test
+  - sbt ++$TRAVIS_SCALA_VERSION it:test
