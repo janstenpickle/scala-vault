@@ -1,13 +1,14 @@
 package janstenpickle.vault.core
 
 import java.net.URL
+import java.nio.charset.Charset
 
 import dispatch.{Req, url}
 import io.circe.generic.auto._
 import io.circe.syntax._
 import janstenpickle.scala.syntax.AsyncResultSyntax._
-import janstenpickle.scala.syntax.SyntaxRequest._
 import janstenpickle.scala.syntax.ResponseSyntax._
+import janstenpickle.scala.syntax.SyntaxRequest._
 import uscala.concurrent.result.AsyncResult
 
 import scala.concurrent.ExecutionContext
@@ -57,8 +58,8 @@ object VaultConfig {
 case class WSClient(server: URL,
                     version: String = "v1") {
    def path(p: String): Req =
-     url(s"${server.toString}/$version/$p").
-       setContentType("application/json", "UTF-8")
+     url(s"${server.toString}/$version/$p")
+       .setContentType("application/json", Charset.forName("UTF-8"))
 }
 
 

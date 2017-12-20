@@ -1,11 +1,11 @@
 package janstenpickle.scala.syntax
 
-import com.ning.http.client.Response
 import dispatch.{Http, Req}
 import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
 import janstenpickle.vault.core.VaultConfig
+import org.asynchttpclient.Response
 import uscala.concurrent.result.AsyncResult
 import uscala.result.Result
 
@@ -35,7 +35,7 @@ object AsyncResultSyntax {
   implicit class ReqToAsyncResult(req: Req)
   (implicit ec: ExecutionContext) {
     def toAsyncResult: AsyncResult[String, Response] =
-      Http(req)
+      Http.default(req)
         .toAsyncResult
   }
 
@@ -111,7 +111,7 @@ object SyntaxRequest {
   implicit class ExecuteRequest(req: AsyncResult[String, Req])
   (implicit ec: ExecutionContext) {
     def execute: AsyncResult[String, Response] =
-      req.flatMapF(Http.apply)
+      req.flatMapF(Http.default.apply)
   }
 
   implicit class HttpOps(req: Req) {
