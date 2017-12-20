@@ -1,9 +1,9 @@
 package janstenpickle.vault.manage
 
-import com.ning.http.client.Response
-import com.ning.http.client.providers.jdk.JDKResponse
 import janstenpickle.vault.core.VaultSpec
 import janstenpickle.vault.manage.Model.{Mount, MountConfig}
+import org.asynchttpclient.Response
+import org.asynchttpclient.netty.NettyResponse
 import org.scalacheck.{Gen, Prop}
 import org.specs2.ScalaCheck
 import uscala.result.Result
@@ -19,7 +19,7 @@ class MountIT extends VaultSpec with ScalaCheck {
       Cannot enable an invalid mount type $enableFail
     """
 
-  lazy val underTest = new Mounts(config)
+  lazy val underTest = Mounts(config)
 
   def happy = Prop.forAllNoShrink(
     mountGen,
@@ -75,9 +75,9 @@ object MountIT {
     forceNoCache <- Gen.option(Gen.oneOf(true, false))
   } yield Mount(mountType, description, Some(MountConfig(defaultTtl, maxTtl, forceNoCache)))
 
-  def processMountTypes(op: (Result[String, Response], String) => Result[String,
-    Response]) =
-      mountTypes.foldLeft[Result[String, Response]](Result.ok(new
-        JDKResponse(null, null, null)))(op)
-
+  def processMountTypes(op: (Result[String, Response], String) =>
+    Result[String, Response]) =
+    mountTypes.foldLeft[Result[String, Response]](
+      Result.ok(new NettyResponse(null, null, null))
+    )(op)
 }

@@ -1,20 +1,21 @@
 package janstenpickle.vault.manage
 
-import com.ning.http.client.Response
+import java.net.{HttpURLConnection => status}
+
 import io.circe.generic.auto._
 import io.circe.syntax._
 import janstenpickle.scala.syntax.OptionSyntax._
-import janstenpickle.scala.syntax.SyntaxRequest._
 import janstenpickle.scala.syntax.ResponseSyntax._
+import janstenpickle.scala.syntax.SyntaxRequest._
 import janstenpickle.scala.syntax.VaultConfigSyntax._
 import janstenpickle.vault.core.VaultConfig
 import janstenpickle.vault.manage.Model._
+import org.asynchttpclient.Response
 import uscala.concurrent.result.AsyncResult
 import uscala.result.Result
 
 import scala.concurrent.ExecutionContext
 
-// scalastyle:off magic.number
 case class Auth(config: VaultConfig) {
   def enable(`type`: String,
              mountPoint: Option[String] = None,
@@ -22,13 +23,13 @@ case class Auth(config: VaultConfig) {
             (implicit ec: ExecutionContext): AsyncResult[String, Response] =
      config.authenticatedRequest(s"sys/auth/${mountPoint.getOrElse(`type`)}")(
        _.post(description.toMap("description") + ("type" -> `type`))
-     ).execute.acceptStatusCodes(204)
+     ).execute.acceptStatusCodes(status.HTTP_NO_CONTENT)
 
   def disable(mountPoint: String)
   (implicit ec: ExecutionContext): AsyncResult[String, Response] =
-    config.authenticatedRequest(s"sys/auth/$mountPoint")(_.delete).
-      execute.
-      acceptStatusCodes(204)
+    config.authenticatedRequest(s"sys/auth/$mountPoint")(_.delete)
+      .execute
+      .acceptStatusCodes(status.HTTP_NO_CONTENT)
 }
 
 case class Mounts(config: VaultConfig) {
@@ -36,14 +37,14 @@ case class Mounts(config: VaultConfig) {
   (implicit ec: ExecutionContext): AsyncResult[String, Response] =
     config.authenticatedRequest("sys/remount")(
       _.post(Map("from" -> from, "to" -> to))
-    ).execute.acceptStatusCodes(204)
+    ).execute.acceptStatusCodes(status.HTTP_NO_CONTENT)
 
   def list(implicit ec: ExecutionContext):
   AsyncResult[String, Map[String, Mount]] =
-    config.authenticatedRequest("sys/mounts")(_.get).
-      execute.
-      acceptStatusCodes(200).
-      extractFromJson[Map[String, Mount]](_.downField("data"))
+    config.authenticatedRequest("sys/mounts")(_.get)
+      .execute
+      .acceptStatusCodes(status.HTTP_OK)
+      .extractFromJson[Map[String, Mount]](_.downField("data"))
 
   def mount(`type`: String,
             mountPoint: Option[String] = None,
@@ -52,43 +53,43 @@ case class Mounts(config: VaultConfig) {
            (implicit ec: ExecutionContext): AsyncResult[String, Response] =
     config.authenticatedRequest(s"sys/mounts/${mountPoint.getOrElse(`type`)}")(
       _.post(MountRequest(`type`, description, conf).asJson)
-    ).execute.acceptStatusCodes(204)
+    ).execute.acceptStatusCodes(status.HTTP_NO_CONTENT)
 
   def delete(mountPoint: String)
   (implicit ec: ExecutionContext): AsyncResult[String, Response] =
-    config.authenticatedRequest(s"sys/mounts/$mountPoint")(_.delete).
-      execute.
-      acceptStatusCodes(204)
+    config.authenticatedRequest(s"sys/mounts/$mountPoint")(_.delete)
+      .execute
+      .acceptStatusCodes(status.HTTP_NO_CONTENT)
 }
 
 case class Policy(config: VaultConfig) {
 
   def list(implicit ec: ExecutionContext): AsyncResult[String, List[String]] =
-    config.authenticatedRequest("sys/policy")(_.get).
-      execute.
-      acceptStatusCodes(200).
-      extractFromJson[List[String]](_.downField("policies"))
+    config.authenticatedRequest("sys/policy")(_.get)
+      .execute
+      .acceptStatusCodes(status.HTTP_OK)
+      .extractFromJson[List[String]](_.downField("policies"))
 
   // NOTE: `rules` is not valid Json
   def inspect(policy: String)(implicit ec: ExecutionContext):
   AsyncResult[String, String] =
-    config.authenticatedRequest(s"sys/policy/$policy")(_.get).
-      execute.
-      acceptStatusCodes(200)
+    config.authenticatedRequest(s"sys/policy/$policy")(_.get)
+      .execute
+      .acceptStatusCodes(status.HTTP_OK)
       .extractFromJson[String](_.downField("rules"))
 
   def set(policy: String, rules: List[Rule])
   (implicit ec: ExecutionContext): AsyncResult[String, Response] =
     config.authenticatedRequest(s"sys/policy/$policy")(
-      _.post(PolicySetting(policy, rules).asJson)).
-      execute.
-      acceptStatusCodes(204)
+      _.post(PolicySetting(policy, rules).asJson))
+      .execute
+      .acceptStatusCodes(status.HTTP_NO_CONTENT)
 
   def delete(policy: String)(implicit ec: ExecutionContext):
   AsyncResult[String, Response] =
-    config.authenticatedRequest(s"sys/policy/$policy")(_.delete).
-      execute.
-      acceptStatusCodes(204)
+    config.authenticatedRequest(s"sys/policy/$policy")(_.delete)
+      .execute
+      .acceptStatusCodes(status.HTTP_NO_CONTENT)
 }
 
 object Model {
@@ -158,4 +159,3 @@ object Model {
     }
   }
 }
-// scalastyle:on magic.number
