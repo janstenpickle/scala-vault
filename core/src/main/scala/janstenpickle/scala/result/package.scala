@@ -2,10 +2,10 @@ package janstenpickle.scala
 
 import cats.data.EitherT
 
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.Future
 import cats.implicits._
 
-import scala.concurrent.duration._
+
 import scala.language.postfixOps
 
 package object result {
@@ -18,7 +18,6 @@ package object result {
     def fail[F, R](f: F): Either[F, R] = Either left f
   }
 
-
   type AsyncResult[F, R] = Future[Result[F, R]]
 
   type AsyncEitherT[F, R] = cats.data.EitherT[Future, F, R]
@@ -29,20 +28,5 @@ package object result {
     }
   }
 
-  implicit class AsyncResultOps[F, R](f: AsyncResult[F, R]) {
-    def eiT: AsyncEitherT[F, R] = EitherT[Future, F, R](f)
 
-    def attemptRun(implicit ec: ExecutionContext): Result[F, R] =
-      Await.result(f, 1 minute)
-  }
-
-  implicit class AsyncResultOpsEitherT[F, R](f: Either[F, R]) {
-    def eiT(implicit ec: ExecutionContext): AsyncEitherT[F, R] =
-      EitherT.fromEither[Future](f)
-  }
-
-  implicit class AsyncResultOpsAny[F, R](r: R) {
-    def eiT: AsyncEitherT[F, R] =
-      EitherT.apply(Future.successful(Either right r))
-  }
 }

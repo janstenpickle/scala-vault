@@ -1,5 +1,6 @@
 package janstenpickle.vault.core
 
+import janstenpickle.scala.syntax.AsyncResultSyntax._
 import janstenpickle.scala.result._
 import org.scalacheck.Prop
 import org.specs2.ScalaCheck

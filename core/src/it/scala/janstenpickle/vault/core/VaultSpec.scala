@@ -3,6 +3,7 @@ package janstenpickle.vault.core
 import java.net.URL
 
 import janstenpickle.scala.result._
+import janstenpickle.scala.syntax.AsyncResultSyntax._
 import janstenpickle.scala.syntax.SyntaxRequest._
 import janstenpickle.scala.syntax.ResponseSyntax._
 import janstenpickle.scala.syntax.VaultConfigSyntax._

@@ -1,5 +1,6 @@
 package janstenpickle.scala.syntax
 
+import cats.data.EitherT
 import com.ning.http.client.Response
 import dispatch.{Http, Req}
 import io.circe._
@@ -8,8 +9,9 @@ import io.circe.syntax._
 import janstenpickle.vault.core.VaultConfig
 import janstenpickle.scala.result._
 import cats.implicits._
+import scala.concurrent.duration._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.postfixOps
 import scala.util.control.NonFatal
 
@@ -25,10 +27,27 @@ object AsyncResultSyntax {
   implicit class FutureToAsyncResult[T](future: Future[T])
   (implicit ec: ExecutionContext) {
     def toAsyncResult: AsyncResult[String, T] = {
-      future.map(Result pure[String, T] _).recover {
-        case NonFatal(e) => Result fail[String, T] e.getMessage
+      future.map(Result.pure[String, T]).recover {
+        case NonFatal(e) => Result.fail[String, T](f = e.getMessage)
       }
     }
+  }
+
+  implicit class AsyncResultOps[F, R](f: AsyncResult[F, R]) {
+    def eiT: AsyncEitherT[F, R] = EitherT[Future, F, R](f)
+
+    def attemptRun(implicit ec: ExecutionContext): Result[F, R] =
+      Await.result(f, 1 minute)
+  }
+
+  implicit class AsyncResultOpsEitherT[F, R](f: Either[F, R]) {
+    def eiT(implicit ec: ExecutionContext): AsyncEitherT[F, R] =
+      EitherT.fromEither[Future](f)
+  }
+
+  implicit class AsyncResultOpsAny[F, R](r: R) {
+    def eiT: AsyncEitherT[F, R] =
+      EitherT.apply(Future.successful(Either right r))
   }
 
   implicit class ReqToAsyncResult(req: Req)
@@ -42,6 +61,7 @@ object AsyncResultSyntax {
 }
 
 object VaultConfigSyntax {
+  import AsyncResultSyntax._
 
   final val VaultTokenHeader = "X-Vault-Token"
 
@@ -57,10 +77,10 @@ object VaultConfigSyntax {
 }
 
 object JsonSyntax {
+  import AsyncResultSyntax._
 
   implicit class JsonHandler(json: AsyncResult[String, Json]) {
-    def extractFromJson[T](jsonPath: HCursor => ACursor = _.downArray)
-    (
+    def extractFromJson[T](jsonPath: HCursor => ACursor = _.downArray)(
       implicit decode: Decoder[T],
       ec: ExecutionContext
     ): AsyncResult[String, T] = {
@@ -75,6 +95,7 @@ object JsonSyntax {
 }
 
 object ResponseSyntax {
+  import AsyncResultSyntax._
   import JsonSyntax._
 
   implicit class ResponseHandler(resp: AsyncResult[String, Response]) {
@@ -112,10 +133,10 @@ object ResponseSyntax {
 }
 
 object SyntaxRequest {
+  import AsyncResultSyntax._
 
   implicit class ExecuteRequest(req: AsyncResult[String, Req])
   (implicit ec: ExecutionContext) {
-    import AsyncResultSyntax._
     def execute: AsyncResult[String, Response] = {
       val r = for {
         request <- req.eiT
