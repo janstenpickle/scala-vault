@@ -21,6 +21,7 @@ object OptionSyntax {
 }
 
 object AsyncResultSyntax {
+
   implicit class FutureToAsyncResult[T](future: Future[T])
   (implicit ec: ExecutionContext) {
     def toAsyncResult: AsyncResult[String, T] = {
