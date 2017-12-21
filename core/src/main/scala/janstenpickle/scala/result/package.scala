@@ -1,7 +1,5 @@
 package janstenpickle.scala
 
-import cats.data.EitherT
-
 import scala.concurrent.Future
 import cats.implicits._
 
