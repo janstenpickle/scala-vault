@@ -9,8 +9,7 @@ import janstenpickle.scala.syntax.ResponseSyntax._
 import janstenpickle.scala.syntax.VaultConfigSyntax._
 import janstenpickle.vault.core.VaultConfig
 import janstenpickle.vault.manage.Model._
-import janstenpickle.scala.Result
-import janstenpickle.scala.Result._
+import janstenpickle.scala.result._
 
 import scala.concurrent.ExecutionContext
 

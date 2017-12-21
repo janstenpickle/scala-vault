@@ -8,7 +8,7 @@ import io.circe.syntax._
 import janstenpickle.scala.syntax.AsyncResultSyntax._
 import janstenpickle.scala.syntax.SyntaxRequest._
 import janstenpickle.scala.syntax.ResponseSyntax._
-import janstenpickle.scala.Result._
+import janstenpickle.scala.result._
 
 import scala.concurrent.ExecutionContext
 

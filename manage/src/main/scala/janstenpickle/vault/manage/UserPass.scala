@@ -6,7 +6,7 @@ import janstenpickle.scala.syntax.SyntaxRequest._
 import janstenpickle.scala.syntax.ResponseSyntax._
 import janstenpickle.scala.syntax.VaultConfigSyntax._
 import janstenpickle.vault.core.VaultConfig
-import janstenpickle.scala.Result._
+import janstenpickle.scala.result._
 
 import scala.concurrent.ExecutionContext
 

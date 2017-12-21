@@ -5,12 +5,16 @@ import cats.data.EitherT
 import scala.concurrent.{ExecutionContext, Future}
 import cats.implicits._
 
-object Result {
+package object result {
   type Result[F, R] = Either[F, R]
+  val Result: Either.type = Either
 
-  def pure[F, R](r: R): Either[F, R] = Either right r
+  implicit class ResultCompanionOps(dc: Either.type ){
+    def pure[F, R](r: R): Either[F, R] = Either right r
 
-  def fail[F, R](f: F): Either[F, R] = Either left f
+    def fail[F, R](f: F): Either[F, R] = Either left f
+  }
+
 
   type AsyncResult[F, R] = Future[Result[F, R]]
 
@@ -31,6 +35,6 @@ object Result {
   }
 
   implicit class AsyncResultOpsAny[F, R](r: R) {
-    def eiT: AsyncEitherT[F, R] = EitherT.apply(Future.successful(pure(r)))
+    def eiT: AsyncEitherT[F, R] = EitherT.apply(Future.successful(Either right r))
   }
 }

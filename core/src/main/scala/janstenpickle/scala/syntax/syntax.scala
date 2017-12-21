@@ -6,7 +6,7 @@ import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
 import janstenpickle.vault.core.VaultConfig
-import janstenpickle.scala.Result._
+import janstenpickle.scala.result._
 import cats.implicits._
 
 import scala.concurrent.{ExecutionContext, Future}
