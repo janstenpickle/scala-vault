@@ -4,18 +4,25 @@ import com.ning.http.client.Response
 import janstenpickle.scala.syntax.SyntaxRequest._
 import janstenpickle.scala.syntax.ResponseSyntax._
 import janstenpickle.scala.syntax.VaultConfigSyntax._
-import uscala.concurrent.result.AsyncResult
-import uscala.result.Result
+import janstenpickle.scala.Result._
+import cats.implicits._
 
 import scala.concurrent.ExecutionContext
 
 // scalastyle:off magic.number
 case class Secrets(config: VaultConfig, backend: String) {
   def get(key: String, subKey: String = "value")
-  (implicit ec: ExecutionContext): AsyncResult[String, String] =
-    getAll(key).flatMapR(x =>
-      Result.fromOption(x.get(subKey),
-      s"Cannot find sub-key $subKey in secret $key"))
+  (implicit ec: ExecutionContext): AsyncResult[String, String] = {
+    val r = for {
+      x <- getAll(key).eiT
+      r <- Either.fromOption(
+        x.get(subKey),
+        s"Cannot find sub-key $subKey in secret $key"
+      ).eiT
+    } yield r
+    r.value
+  }
+
 
   def getAll(key: String)
   (implicit ec: ExecutionContext): AsyncResult[String, Map[String, String]] =

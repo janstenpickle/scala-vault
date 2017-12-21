@@ -6,16 +6,11 @@ import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
 import janstenpickle.vault.core.VaultConfig
-import uscala.concurrent.result.AsyncResult
-import uscala.result.Result
+import janstenpickle.scala.Result._
+import cats.implicits._
 
 import scala.concurrent.{ExecutionContext, Future}
-
-object ConversionSyntax {
-  implicit def toResult[A, B](xor: Either[A, B]): Result[A, B] = xor.fold(
-    Result.fail, Result.ok
-  )
-}
+import scala.language.postfixOps
 
 object OptionSyntax {
   implicit class ToTuple[T](opt: Option[T]) {
@@ -27,9 +22,7 @@ object OptionSyntax {
 object AsyncResultSyntax {
   implicit class FutureToAsyncResult[T](future: Future[T])
   (implicit ec: ExecutionContext) {
-    def toAsyncResult: AsyncResult[String, T] = AsyncResult(
-      future.map(Result.ok)
-    )
+    def toAsyncResult: AsyncResult[String, T] = ???
   }
 
   implicit class ReqToAsyncResult(req: Req)
@@ -48,52 +41,62 @@ object VaultConfigSyntax {
 
   implicit class RequestHelper(config: VaultConfig) {
     def authenticatedRequest(path: String)(req: Req => Req)
-    (implicit ec: ExecutionContext): AsyncResult[String, Req] =
-      config.token.map[Req](token =>
-        req(config.wsClient.path(path).setHeader(VaultTokenHeader, token))
-      )
+    (implicit ec: ExecutionContext): AsyncResult[String, Req] ={
+      val r = for {
+        token <- config.token.eiT
+      } yield req(config.wsClient.path(path).setHeader(VaultTokenHeader, token))
+      r.value
+    }
   }
 }
 
 object JsonSyntax {
-  import ConversionSyntax._
 
   implicit class JsonHandler(json: AsyncResult[String, Json]) {
     def extractFromJson[T](jsonPath: HCursor => ACursor = _.downArray)
     (
       implicit decode: Decoder[T],
       ec: ExecutionContext
-    ): AsyncResult[String, T] =
-      json.flatMapR(j => decode.tryDecode(
-        jsonPath(j.hcursor)
-      ).leftMap(_.message))
+    ): AsyncResult[String, T] = {
+      //      json.flatMapR(j => decode.tryDecode(
+      //        jsonPath(j.hcursor)
+      //      ).leftMap(_.message))
+      ???
+    }
+
   }
 }
 
 object ResponseSyntax {
-  import ConversionSyntax._
   import JsonSyntax._
 
   implicit class ResponseHandler(resp: AsyncResult[String, Response]) {
     def acceptStatusCodes(codes: Int*)
-    (implicit ec: ExecutionContext): AsyncResult[String, Response] =
-      resp.flatMapR(
-        response =>
-          if (codes.contains(response.getStatusCode)) {
-            Result.ok(response)
-          }
-          else {
-            Result.fail(
-              s"Received failure response from server:" +
-              s" ${response.getStatusCode}\n ${response.getResponseBody}"
-            )
-          }
-      )
+    (implicit ec: ExecutionContext): AsyncResult[String, Response] = {
+      //resp.flatMapR(
+      //  response =>
+      //    if (codes.contains(response.getStatusCode)) {
+      //      Result.ok(response)
+      //    }
+      //    else {
+      //      Result.fail(
+      //        s"Received failure response from server:" +
+      //        s" ${response.getStatusCode}\n ${response.getResponseBody}"
+      //      )
+      //    }
+      //)
 
-    def extractJson(implicit ec: ExecutionContext): AsyncResult[String, Json] =
-      resp.flatMapR(response =>
-        parse(response.getResponseBody).leftMap(_.message)
-      )
+      ???
+    }
+
+    def extractJson(implicit ec: ExecutionContext):
+      AsyncResult[String, Json] = {
+//      resp.flatMapR(response =>
+//        parse(response.getResponseBody).leftMap(_.message)
+//      )
+      ???
+    }
+
 
     def extractFromJson[T](jsonPath: HCursor => ACursor = _.downArray)
     (
@@ -108,8 +111,11 @@ object SyntaxRequest {
 
   implicit class ExecuteRequest(req: AsyncResult[String, Req])
   (implicit ec: ExecutionContext) {
-    def execute: AsyncResult[String, Response] =
-      req.flatMapF(Http(_))
+    def execute: AsyncResult[String, Response] = {
+      //req.flatMapF(Http(_))
+      ???
+    }
+
   }
 
   implicit class HttpOps(req: Req) {

@@ -9,8 +9,8 @@ import janstenpickle.scala.syntax.ResponseSyntax._
 import janstenpickle.scala.syntax.VaultConfigSyntax._
 import janstenpickle.vault.core.VaultConfig
 import janstenpickle.vault.manage.Model._
-import uscala.concurrent.result.AsyncResult
-import uscala.result.Result
+import janstenpickle.scala.Result
+import janstenpickle.scala.Result._
 
 import scala.concurrent.ExecutionContext
 
@@ -150,10 +150,10 @@ object Model {
         )
       )
       if (decoded.isEmpty) {
-        Result.fail(s"Could not find any valid rules in string: $ruleString")
+        Result fail s"Could not find any valid rules in string: $ruleString"
       }
       else {
-        Result.ok(decoded)
+        Result pure decoded
       }
     }
   }

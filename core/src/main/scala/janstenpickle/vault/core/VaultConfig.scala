@@ -8,7 +8,7 @@ import io.circe.syntax._
 import janstenpickle.scala.syntax.AsyncResultSyntax._
 import janstenpickle.scala.syntax.SyntaxRequest._
 import janstenpickle.scala.syntax.ResponseSyntax._
-import uscala.concurrent.result.AsyncResult
+import janstenpickle.scala.Result._
 
 import scala.concurrent.ExecutionContext
 
@@ -50,7 +50,7 @@ object VaultConfig {
 
   def apply(wsClient: WSClient, token: String)
   (implicit ec: ExecutionContext): VaultConfig =
-    VaultConfig(wsClient, AsyncResult.ok[String, String](token))
+    VaultConfig(wsClient, AsyncResult.pure(token))
 }
 
 
