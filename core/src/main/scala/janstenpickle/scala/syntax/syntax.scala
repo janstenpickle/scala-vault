@@ -11,6 +11,7 @@ import cats.implicits._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
+import scala.util.control.NonFatal
 
 object OptionSyntax {
   implicit class ToTuple[T](opt: Option[T]) {
@@ -22,7 +23,11 @@ object OptionSyntax {
 object AsyncResultSyntax {
   implicit class FutureToAsyncResult[T](future: Future[T])
   (implicit ec: ExecutionContext) {
-    def toAsyncResult: AsyncResult[String, T] = ???
+    def toAsyncResult: AsyncResult[String, T] = {
+      future.map(Result pure[String, T] _).recover {
+        case NonFatal(e) => Result fail[String, T] e.getMessage
+      }
+    }
   }
 
   implicit class ReqToAsyncResult(req: Req)
@@ -58,10 +63,11 @@ object JsonSyntax {
       implicit decode: Decoder[T],
       ec: ExecutionContext
     ): AsyncResult[String, T] = {
-      //      json.flatMapR(j => decode.tryDecode(
-      //        jsonPath(j.hcursor)
-      //      ).leftMap(_.message))
-      ???
+      val r = for {
+        j <- json.eiT
+        e <- decode.tryDecode(jsonPath(j.hcursor)).leftMap(_.message).eiT
+      } yield e
+      r.value
     }
 
   }
@@ -73,28 +79,25 @@ object ResponseSyntax {
   implicit class ResponseHandler(resp: AsyncResult[String, Response]) {
     def acceptStatusCodes(codes: Int*)
     (implicit ec: ExecutionContext): AsyncResult[String, Response] = {
-      //resp.flatMapR(
-      //  response =>
-      //    if (codes.contains(response.getStatusCode)) {
-      //      Result.ok(response)
-      //    }
-      //    else {
-      //      Result.fail(
-      //        s"Received failure response from server:" +
-      //        s" ${response.getStatusCode}\n ${response.getResponseBody}"
-      //      )
-      //    }
-      //)
-
-      ???
+      val r = for {
+        response <- resp.eiT
+        r <- Result.cond(
+          test = codes.contains(response.getStatusCode),
+          right = response,
+          left = s"Received failure response from server:" +
+            s" ${response.getStatusCode}\n ${response.getResponseBody}"
+        ).eiT
+      } yield r
+      r.value
     }
 
     def extractJson(implicit ec: ExecutionContext):
       AsyncResult[String, Json] = {
-//      resp.flatMapR(response =>
-//        parse(response.getResponseBody).leftMap(_.message)
-//      )
-      ???
+      val r = for {
+        response <- resp.eiT
+        r <- parse(response.getResponseBody).leftMap(_.message).eiT
+      } yield r
+      r.value
     }
 
 
@@ -111,9 +114,13 @@ object SyntaxRequest {
 
   implicit class ExecuteRequest(req: AsyncResult[String, Req])
   (implicit ec: ExecutionContext) {
+    import AsyncResultSyntax._
     def execute: AsyncResult[String, Response] = {
-      //req.flatMapF(Http(_))
-      ???
+      val r = for {
+        request <- req.eiT
+        response <- Http(request).toAsyncResult.eiT
+      } yield response
+      r.value
     }
 
   }
