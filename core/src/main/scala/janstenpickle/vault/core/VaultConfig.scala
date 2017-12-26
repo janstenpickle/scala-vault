@@ -12,7 +12,7 @@ import janstenpickle.scala.result._
 
 import scala.concurrent.ExecutionContext
 
-case class VaultConfig(wsClient: WSClient, token: AsyncResult[String, String])
+case class VaultConfig(wsClient: WSClient, token: AsyncResult[String])
 @deprecated("Vault 0.6.5 deprecated AppId in favor of AppRole", "0.4.0")
 case class AppId(app_id: String, user_id: String)
 case class AppRole(role_id: String, secret_id: String)
@@ -55,8 +55,10 @@ object VaultConfig {
 
 
 
-case class WSClient(server: URL,
-                    version: String = "v1") {
+case class WSClient(
+  server: URL,
+  version: String = "v1"
+) {
    def path(p: String): Req =
      url(s"${server.toString}/$version/$p").
        setContentType("application/json", "UTF-8")

@@ -13,7 +13,7 @@ import scala.concurrent.ExecutionContext
 // scalastyle:off magic.number
 case class Secrets(config: VaultConfig, backend: String) {
   def get(key: String, subKey: String = "value")
-  (implicit ec: ExecutionContext): AsyncResult[String, String] = {
+  (implicit ec: ExecutionContext): AsyncResult[String] = {
     val r = for {
       x <- getAll(key).eiT
       r <- Either.fromOption(
@@ -26,27 +26,27 @@ case class Secrets(config: VaultConfig, backend: String) {
 
 
   def getAll(key: String)
-  (implicit ec: ExecutionContext): AsyncResult[String, Map[String, String]] =
+  (implicit ec: ExecutionContext): AsyncResult[Map[String, String]] =
     config.authenticatedRequest(path(key))(_.get).
       execute.
       acceptStatusCodes(200).
       extractFromJson[Map[String, String]](_.downField("data"))
 
   def set(key: String, value: String)
-  (implicit ec: ExecutionContext): AsyncResult[String, Response] =
+  (implicit ec: ExecutionContext): AsyncResult[Response] =
     set(key, "value", value)
 
   def set(key: String, subKey: String, value: String)
-  (implicit ec: ExecutionContext): AsyncResult[String, Response] =
+  (implicit ec: ExecutionContext): AsyncResult[Response] =
     set(key, Map(subKey -> value))
 
   def set(key: String, values: Map[String, String])
-  (implicit ec: ExecutionContext): AsyncResult[String, Response] =
+  (implicit ec: ExecutionContext): AsyncResult[Response] =
     config.authenticatedRequest(path(key))(_.post(values)).
       execute.
       acceptStatusCodes(204)
 
-  def list(implicit ec: ExecutionContext): AsyncResult[String, List[String]] =
+  def list(implicit ec: ExecutionContext): AsyncResult[List[String]] =
     config.authenticatedRequest(backend)(
       _.addQueryParameter("list", true.toString).get).
       execute.

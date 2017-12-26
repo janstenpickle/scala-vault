@@ -79,9 +79,8 @@ object MountIT {
     forceNoCache <- Gen.option(Gen.oneOf(true, false))
   } yield Mount(mountType, description, Some(MountConfig(defaultTtl, maxTtl, forceNoCache)))
 
-  def processMountTypes(op: (Result[String, Response], String) => Result[String,
-    Response]) =
-      mountTypes.foldLeft[Result[String, Response]](Result.pure(new
+  def processMountTypes(op: (Result[Response], String) => Result[Response]) =
+      mountTypes.foldLeft[Result[Response]](Result.pure(new
         JDKResponse(null, null, null)))(op)
 
 }

@@ -16,7 +16,7 @@ case class UserPass(wsClient: WSClient) {
     password: String,
     ttl: Int,
     client: String = "userpass"
-  )(implicit ec: ExecutionContext): AsyncResult[String, UserPassResponse] =
+  )(implicit ec: ExecutionContext): AsyncResult[UserPassResponse] =
     wsClient.path(s"auth/$client/login/$username").
       post(Map("password" -> password, "ttl" -> s"${ttl}s")).
       toAsyncResult.

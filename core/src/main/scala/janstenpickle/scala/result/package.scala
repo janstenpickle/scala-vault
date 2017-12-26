@@ -7,21 +7,21 @@ import cats.implicits._
 import scala.language.postfixOps
 
 package object result {
-  type Result[F, R] = Either[F, R]
+  type Result[R] = Either[String, R]
   val Result: Either.type = Either
 
   implicit class ResultCompanionOps(dc: Either.type ){
-    def pure[F, R](r: R): Either[F, R] = Either right r
+    def pure[R](r: R): Either[String, R] = Either right r
 
-    def fail[F, R](f: F): Either[F, R] = Either left f
+    def fail[R](f: String): Either[String, R] = Either left f
   }
 
-  type AsyncResult[F, R] = Future[Result[F, R]]
+  type AsyncResult[R] = Future[Result[R]]
 
-  type AsyncEitherT[F, R] = cats.data.EitherT[Future, F, R]
+  type AsyncEitherT[R] = cats.data.EitherT[Future, String, R]
 
   object AsyncResult {
-    def pure[F, R](r: R): AsyncResult[F, R] = {
+    def pure[R](r: R): AsyncResult[R] = {
       Future.successful(Either right r)
     }
   }

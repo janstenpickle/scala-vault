@@ -18,7 +18,7 @@ case class UserPass(config: VaultConfig) {
              ttl: Int,
              policies: Option[List[String]] = None,
              client: String = DefaultClient)
-            (implicit ec: ExecutionContext): AsyncResult[String, Response] =
+            (implicit ec: ExecutionContext): AsyncResult[Response] =
     config.authenticatedRequest(s"auth/$client/users/$username")(
       _.post(policies.map(_.mkString(",")).toMap("policies") ++
                          Map("username" -> username,
@@ -27,7 +27,7 @@ case class UserPass(config: VaultConfig) {
     ).execute.acceptStatusCodes(204)
 
   def delete(username: String, client: String = DefaultClient)
-  (implicit ec: ExecutionContext): AsyncResult[String, Response] =
+  (implicit ec: ExecutionContext): AsyncResult[Response] =
     config.authenticatedRequest(s"auth/$client/users/$username")(_.delete).
       execute.
       acceptStatusCodes(204)
@@ -36,7 +36,7 @@ case class UserPass(config: VaultConfig) {
     username: String,
     password: String,
     client: String = DefaultClient
-  )(implicit ec: ExecutionContext): AsyncResult[String, Response] =
+  )(implicit ec: ExecutionContext): AsyncResult[Response] =
     config.authenticatedRequest(s"auth/$client/users/$username/password")(
       _.post(Map("username" -> username, "password" -> password))
     ).execute.acceptStatusCodes(204)
@@ -45,7 +45,7 @@ case class UserPass(config: VaultConfig) {
     username: String,
     policies: List[String],
     client: String = DefaultClient
-  )(implicit ec: ExecutionContext): AsyncResult[String, Response] =
+  )(implicit ec: ExecutionContext): AsyncResult[Response] =
     config.authenticatedRequest(s"auth/$client/users/$username/policies")(
       _.post(Map("username" -> username, "policies" -> policies.mkString(",")))
     ).execute.acceptStatusCodes(204)
