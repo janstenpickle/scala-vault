@@ -9,8 +9,7 @@ import janstenpickle.scala.syntax.ResponseSyntax._
 import janstenpickle.scala.syntax.VaultConfigSyntax._
 import janstenpickle.vault.core.VaultConfig
 import janstenpickle.vault.manage.Model._
-import uscala.concurrent.result.AsyncResult
-import uscala.result.Result
+import janstenpickle.scala.result._
 
 import scala.concurrent.ExecutionContext
 
@@ -19,13 +18,13 @@ case class Auth(config: VaultConfig) {
   def enable(`type`: String,
              mountPoint: Option[String] = None,
              description: Option[String] = None)
-            (implicit ec: ExecutionContext): AsyncResult[String, Response] =
+            (implicit ec: ExecutionContext): AsyncResult[Response] =
      config.authenticatedRequest(s"sys/auth/${mountPoint.getOrElse(`type`)}")(
        _.post(description.toMap("description") + ("type" -> `type`))
      ).execute.acceptStatusCodes(204)
 
   def disable(mountPoint: String)
-  (implicit ec: ExecutionContext): AsyncResult[String, Response] =
+  (implicit ec: ExecutionContext): AsyncResult[Response] =
     config.authenticatedRequest(s"sys/auth/$mountPoint")(_.delete).
       execute.
       acceptStatusCodes(204)
@@ -33,13 +32,13 @@ case class Auth(config: VaultConfig) {
 
 case class Mounts(config: VaultConfig) {
   def remount(from: String, to: String)
-  (implicit ec: ExecutionContext): AsyncResult[String, Response] =
+  (implicit ec: ExecutionContext): AsyncResult[Response] =
     config.authenticatedRequest("sys/remount")(
       _.post(Map("from" -> from, "to" -> to))
     ).execute.acceptStatusCodes(204)
 
   def list(implicit ec: ExecutionContext):
-  AsyncResult[String, Map[String, Mount]] =
+  AsyncResult[Map[String, Mount]] =
     config.authenticatedRequest("sys/mounts")(_.get).
       execute.
       acceptStatusCodes(200).
@@ -49,13 +48,13 @@ case class Mounts(config: VaultConfig) {
             mountPoint: Option[String] = None,
             description: Option[String] = None,
             conf: Option[Mount] = None)
-           (implicit ec: ExecutionContext): AsyncResult[String, Response] =
+           (implicit ec: ExecutionContext): AsyncResult[Response] =
     config.authenticatedRequest(s"sys/mounts/${mountPoint.getOrElse(`type`)}")(
       _.post(MountRequest(`type`, description, conf).asJson)
     ).execute.acceptStatusCodes(204)
 
   def delete(mountPoint: String)
-  (implicit ec: ExecutionContext): AsyncResult[String, Response] =
+  (implicit ec: ExecutionContext): AsyncResult[Response] =
     config.authenticatedRequest(s"sys/mounts/$mountPoint")(_.delete).
       execute.
       acceptStatusCodes(204)
@@ -63,7 +62,7 @@ case class Mounts(config: VaultConfig) {
 
 case class Policy(config: VaultConfig) {
 
-  def list(implicit ec: ExecutionContext): AsyncResult[String, List[String]] =
+  def list(implicit ec: ExecutionContext): AsyncResult[List[String]] =
     config.authenticatedRequest("sys/policy")(_.get).
       execute.
       acceptStatusCodes(200).
@@ -71,21 +70,21 @@ case class Policy(config: VaultConfig) {
 
   // NOTE: `rules` is not valid Json
   def inspect(policy: String)(implicit ec: ExecutionContext):
-  AsyncResult[String, String] =
+  AsyncResult[String] =
     config.authenticatedRequest(s"sys/policy/$policy")(_.get).
       execute.
       acceptStatusCodes(200)
       .extractFromJson[String](_.downField("rules"))
 
   def set(policy: String, rules: List[Rule])
-  (implicit ec: ExecutionContext): AsyncResult[String, Response] =
+  (implicit ec: ExecutionContext): AsyncResult[Response] =
     config.authenticatedRequest(s"sys/policy/$policy")(
       _.post(PolicySetting(policy, rules).asJson)).
       execute.
       acceptStatusCodes(204)
 
   def delete(policy: String)(implicit ec: ExecutionContext):
-  AsyncResult[String, Response] =
+  AsyncResult[Response] =
     config.authenticatedRequest(s"sys/policy/$policy")(_.delete).
       execute.
       acceptStatusCodes(204)
@@ -105,7 +104,7 @@ object Model {
   )
 
   case class PolicySetting(name: String, rules: Option[String]) {
-    lazy val decodeRules: Option[Result[String, List[Rule]]] = rules.filter(
+    lazy val decodeRules: Option[Result[List[Rule]]] = rules.filter(
       _.nonEmpty).map(Rule.decode)
   }
   object PolicySetting {
@@ -137,7 +136,7 @@ object Model {
     val capabilitiesRegex = """\s+capabilities\s+=\s+\[(.+)\]""".r
     val policyRegex = """\s+policy\s+=\s+"(\S+)"""".r
 
-    def decode(ruleString: String): Result[String, List[Rule]] = {
+    def decode(ruleString: String): Result[List[Rule]] = {
       val rules = ruleString.split("""\s*}\s+\n""").toList
       val decoded = rules.foldLeft(List.empty[Rule])( (acc, v) =>
         acc ++ pathRegex.findFirstMatchIn(v).map(_.group(1)).map(path =>
@@ -150,10 +149,10 @@ object Model {
         )
       )
       if (decoded.isEmpty) {
-        Result.fail(s"Could not find any valid rules in string: $ruleString")
+        Result fail s"Could not find any valid rules in string: $ruleString"
       }
       else {
-        Result.ok(decoded)
+        Result pure decoded
       }
     }
   }

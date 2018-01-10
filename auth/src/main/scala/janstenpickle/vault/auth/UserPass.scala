@@ -5,7 +5,7 @@ import janstenpickle.scala.syntax.AsyncResultSyntax._
 import janstenpickle.scala.syntax.SyntaxRequest._
 import janstenpickle.scala.syntax.ResponseSyntax._
 import janstenpickle.vault.core.WSClient
-import uscala.concurrent.result.AsyncResult
+import janstenpickle.scala.result._
 
 import scala.concurrent.ExecutionContext
 
@@ -16,7 +16,7 @@ case class UserPass(wsClient: WSClient) {
     password: String,
     ttl: Int,
     client: String = "userpass"
-  )(implicit ec: ExecutionContext): AsyncResult[String, UserPassResponse] =
+  )(implicit ec: ExecutionContext): AsyncResult[UserPassResponse] =
     wsClient.path(s"auth/$client/login/$username").
       post(Map("password" -> password, "ttl" -> s"${ttl}s")).
       toAsyncResult.

@@ -2,10 +2,10 @@ package janstenpickle.vault.manage
 
 import janstenpickle.vault.manage.Model.Rule
 import org.scalacheck.{Gen, Prop}
+import org.specs2.matcher.EitherMatchers
 import org.specs2.{ScalaCheck, Specification}
-import uscala.result.specs2.ResultMatchers
 
-class RuleSpec extends Specification with ScalaCheck with ResultMatchers {
+class RuleSpec extends Specification with ScalaCheck with EitherMatchers {
   import RuleSpec._
 
   override def is =
@@ -15,13 +15,13 @@ class RuleSpec extends Specification with ScalaCheck with ResultMatchers {
       """
 
   def passes = Prop.forAllNoShrink(Gen.listOf(ruleGen).suchThat(_.nonEmpty)) (rules =>
-    Rule.decode(rules.map(_.encode).mkString("\n")) must beOk.like {
+    Rule.decode(rules.map(_.encode).mkString("\n")) must beRight.like {
       case a => a must containAllOf(rules)
     }
   )
 
   def fails = Prop.forAllNoShrink(Gen.listOf(badRuleGen).suchThat(_.nonEmpty)) (rules =>
-    Rule.decode(rules.mkString("\n")) must beFail
+    Rule.decode(rules.mkString("\n")) must beLeft
   )
 }
 

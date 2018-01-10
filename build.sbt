@@ -2,9 +2,12 @@ import sbt.Keys._
 
 name := "vault"
 
-lazy val uscalaVersion = "0.5.1"
+lazy val scalaVersion211 = "2.11.11"
+lazy val scalaVersion212 = "2.12.4"
+
 lazy val specs2Version = "3.8.8"
-lazy val circeVersion = "0.7.0"
+lazy val catsVersion = "1.0.1"
+lazy val circeVersion = "0.9.0"
 lazy val dispatchVersion = "0.11.3"
 lazy val startVaultTask = TaskKey[Unit](
   "startVaultTask",
@@ -38,7 +41,8 @@ val pomInfo = (
 
 lazy val commonSettings = Seq(
   version := "0.4.2-SNAPSHOT",
-  scalaVersion := "2.11.11",
+  scalaVersion := scalaVersion211,
+  crossScalaVersions := Seq(scalaVersion211, scalaVersion212),
   organization := "janstenpickle.vault",
   pomExtra := pomInfo,
   autoAPIMappings := true,
@@ -50,11 +54,9 @@ lazy val commonSettings = Seq(
     url("https://github.com/janstenpickle/scala-vault/blob/master/LICENSE")
   ),
   resolvers ++= Seq(Resolver.sonatypeRepo("releases"), Resolver.jcenterRepo),
+  libraryDependencies += "org.typelevel" %% "cats-core" % catsVersion,
   libraryDependencies ++= Seq(
     "net.databinder.dispatch" %% "dispatch-core" % dispatchVersion,
-    "org.uscala" %% "uscala-result" % uscalaVersion,
-    "org.uscala" %% "uscala-result-async" % uscalaVersion,
-    "org.uscala" %% "uscala-result-specs2" % uscalaVersion % "it,test",
     "org.specs2" %% "specs2-core" % specs2Version % "it,test",
     "org.specs2" %% "specs2-scalacheck" % specs2Version % "it,test",
     "org.specs2" %% "specs2-junit" % specs2Version % "it,test"
@@ -77,7 +79,9 @@ lazy val commonSettings = Seq(
     "-unchecked",
     "-deprecation",
     "-feature",
-    "-language:implicitConversions"),
+    "-language:implicitConversions",
+    "-Ypartial-unification"
+  ),
   javacOptions in Compile ++= Seq(
     "-source", "1.8",
     "-target", "1.8",

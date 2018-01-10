@@ -8,11 +8,11 @@ import io.circe.syntax._
 import janstenpickle.scala.syntax.AsyncResultSyntax._
 import janstenpickle.scala.syntax.SyntaxRequest._
 import janstenpickle.scala.syntax.ResponseSyntax._
-import uscala.concurrent.result.AsyncResult
+import janstenpickle.scala.result._
 
 import scala.concurrent.ExecutionContext
 
-case class VaultConfig(wsClient: WSClient, token: AsyncResult[String, String])
+case class VaultConfig(wsClient: WSClient, token: AsyncResult[String])
 @deprecated("Vault 0.6.5 deprecated AppId in favor of AppRole", "0.4.0")
 case class AppId(app_id: String, user_id: String)
 case class AppRole(role_id: String, secret_id: String)
@@ -50,13 +50,15 @@ object VaultConfig {
 
   def apply(wsClient: WSClient, token: String)
   (implicit ec: ExecutionContext): VaultConfig =
-    VaultConfig(wsClient, AsyncResult.ok[String, String](token))
+    VaultConfig(wsClient, AsyncResult.pure(token))
 }
 
 
 
-case class WSClient(server: URL,
-                    version: String = "v1") {
+case class WSClient(
+  server: URL,
+  version: String = "v1"
+) {
    def path(p: String): Req =
      url(s"${server.toString}/$version/$p").
        setContentType("application/json", "UTF-8")

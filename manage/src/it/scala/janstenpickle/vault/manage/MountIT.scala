@@ -6,7 +6,8 @@ import janstenpickle.vault.core.VaultSpec
 import janstenpickle.vault.manage.Model.{Mount, MountConfig}
 import org.scalacheck.{Gen, Prop}
 import org.specs2.ScalaCheck
-import uscala.result.Result
+import janstenpickle.scala.syntax.AsyncResultSyntax._
+import janstenpickle.scala.result._
 
 class MountIT extends VaultSpec with ScalaCheck {
   import MountIT._
@@ -27,32 +28,35 @@ class MountIT extends VaultSpec with ScalaCheck {
     longerStrGen,
     Gen.option(longerStrGen))((mount, mountPoint, remountPoint, desc) => {
       (underTest.mount(mount.`type`, Some(mountPoint), desc, Some(mount))
-      .attemptRun(_.getMessage()) must beOk) and
+      .attemptRun must beRight) and
       (underTest.remount(mountPoint, remountPoint)
-      .attemptRun(_.getMessage()) must beOk) and
+        .attemptRun must beRight) and
       (underTest.delete(remountPoint)
-      .attemptRun(_.getMessage()) must beOk) and
+        .attemptRun must beRight) and
       (underTest.delete(mountPoint)
-      .attemptRun(_.getMessage()) must beOk)
+        .attemptRun must beRight)
     })
 
-  def listSuccess = (processMountTypes((acc, mount) =>
-    acc.flatMap(_ => underTest.mount(mount)
-    .attemptRun(_.getMessage()))) must beOk) and
-    (underTest.list.attemptRun(_.getMessage()) must beOk.like {
+  def listSuccess = {
+    processMountTypes((acc, mount) =>
+      acc.right.flatMap(_ => underTest.mount(mount).attemptRun)
+    ) must beRight
+  } and {
+    underTest.list.attemptRun must beRight.like {
       case a => a.map(_._2.`type`) must containAllOf(mountTypes)
-    }) and
-    (processMountTypes((acc, mount) =>
-      acc.flatMap(_ =>
-          underTest.delete(mount).attemptRun(_.getMessage()))
-    ) must beOk)
+    }
+  } and {
+    processMountTypes((acc, mount) =>
+      acc.right.flatMap(_ => underTest.delete(mount).attemptRun)
+    ) must beRight
+  }
 
   def enableFail = Prop.forAllNoShrink(
     longerStrGen.suchThat(!mountTypes.contains(_)),
     longerStrGen,
     Gen.option(longerStrGen))((`type`, mount, desc) =>
       underTest.mount(`type`, Some(mount), desc)
-        .attemptRun(_.getMessage()) must beFail
+        .attemptRun must beLeft
   )
 
 }
@@ -75,9 +79,8 @@ object MountIT {
     forceNoCache <- Gen.option(Gen.oneOf(true, false))
   } yield Mount(mountType, description, Some(MountConfig(defaultTtl, maxTtl, forceNoCache)))
 
-  def processMountTypes(op: (Result[String, Response], String) => Result[String,
-    Response]) =
-      mountTypes.foldLeft[Result[String, Response]](Result.ok(new
+  def processMountTypes(op: (Result[Response], String) => Result[Response]) =
+      mountTypes.foldLeft[Result[Response]](Result.pure(new
         JDKResponse(null, null, null)))(op)
 
 }

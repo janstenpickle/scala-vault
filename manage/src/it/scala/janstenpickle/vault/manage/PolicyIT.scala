@@ -4,9 +4,10 @@ import janstenpickle.vault.core.VaultSpec
 import janstenpickle.vault.manage.Model.Rule
 import org.scalacheck.{Gen, Prop}
 import org.specs2.ScalaCheck
-import uscala.result.Result
+import janstenpickle.scala.syntax.AsyncResultSyntax._
+import org.specs2.matcher.EitherMatchers
 
-class PolicyIT extends VaultSpec with ScalaCheck {
+class PolicyIT extends VaultSpec with ScalaCheck with EitherMatchers {
   import PolicyIT._
   import VaultSpec._
 
@@ -23,17 +24,17 @@ class PolicyIT extends VaultSpec with ScalaCheck {
     Gen.listOf(ruleGen(longerStrGen, policyGen, capabilitiesGen)).
     suchThat(_.nonEmpty)) { (name, rules) =>
       (underTest.set(name.toLowerCase, rules)
-      .attemptRun(_.getMessage()) must beOk) and
+      .attemptRun must beRight) and
       (underTest.inspect(name.toLowerCase)
-      .attemptRun(_.getMessage()) must beOk) and
-      (underTest.delete(name.toLowerCase).attemptRun(_.getMessage()) must beOk)
+        .attemptRun must beRight) and
+      (underTest.delete(name.toLowerCase).attemptRun must beRight)
   }
 
   // cannot use generated values here as
   // vault seems to have a failure rate limit
   def sad = underTest.set(
     "nic", List(Rule("cage", Some(List("kim", "copolla"))))
-  ).attemptRun(_.getMessage()) must beFail
+  ).attemptRun must beLeft
 }
 
 object PolicyIT {

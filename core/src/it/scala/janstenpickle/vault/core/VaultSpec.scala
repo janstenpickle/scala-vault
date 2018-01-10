@@ -2,25 +2,27 @@ package janstenpickle.vault.core
 
 import java.net.URL
 
+import janstenpickle.scala.result._
+import janstenpickle.scala.syntax.AsyncResultSyntax._
 import janstenpickle.scala.syntax.SyntaxRequest._
 import janstenpickle.scala.syntax.ResponseSyntax._
 import janstenpickle.scala.syntax.VaultConfigSyntax._
 import org.scalacheck.Gen
 import org.specs2.Specification
+import org.specs2.matcher.EitherMatchers
 import org.specs2.specification.core.Fragments
-import uscala.result.specs2.ResultMatchers
 
 import scala.concurrent.ExecutionContext
 import scala.io.Source
 
 
-trait VaultSpec extends Specification with ResultMatchers {
+trait VaultSpec extends Specification with EitherMatchers {
   implicit val errConverter: Throwable => String = _.getMessage
   implicit val ec: ExecutionContext = ExecutionContext.global
 
-  lazy val rootToken = Source.fromFile("/tmp/.root-token").mkString.trim
-  lazy val roleId = Source.fromFile("/tmp/.role-id").mkString.trim
-  lazy val secretId = Source.fromFile("/tmp/.secret-id").mkString.trim
+  lazy val rootToken: String = Source.fromFile("/tmp/.root-token").mkString.trim
+  lazy val roleId:    String = Source.fromFile("/tmp/.role-id").mkString.trim
+  lazy val secretId:  String = Source.fromFile("/tmp/.secret-id").mkString.trim
 
   lazy val rootConfig: VaultConfig = VaultConfig(
     WSClient(new URL("http://localhost:8200")), rootToken
@@ -38,7 +40,7 @@ trait VaultSpec extends Specification with ResultMatchers {
     "con-air"
   )
 
-  def check = config.token.attemptRun(_.getMessage) must beOk
+  def check = config.token.attemptRun should beRight
 
   override def map(fs: => Fragments) =
     s2"""

@@ -1,5 +1,6 @@
 package janstenpickle.vault.manage
 
+import janstenpickle.scala.syntax.AsyncResultSyntax._
 import janstenpickle.vault.core.VaultSpec
 import org.scalacheck.{Prop, Gen}
 import org.specs2.ScalaCheck
@@ -19,15 +20,15 @@ class AuthIT extends VaultSpec with ScalaCheck {
   def happy = Prop.forAllNoShrink(
     backends, longerStrGen, Gen.option(longerStrGen))((backend, mount, desc) =>
       (underTest.enable(backend, Some(mount), desc)
-      .attemptRun(_.getMessage()) must beOk) and
-      (underTest.disable(mount).attemptRun(_.getMessage()) must beOk)
+      .attemptRun must beRight) and
+      (underTest.disable(mount).attemptRun must beRight)
   )
 
   def enableFail = Prop.forAllNoShrink(
     longerStrGen.suchThat(!backendNames.contains(_)),
     longerStrGen,
     Gen.option(longerStrGen))((backend, mount, desc) =>
-      underTest.enable(mount).attemptRun(_.getMessage()) must beFail
+      underTest.enable(mount).attemptRun must beLeft
   )
 
 }

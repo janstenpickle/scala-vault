@@ -1,5 +1,6 @@
 package janstenpickle.vault.auth
 
+import janstenpickle.scala.syntax.AsyncResultSyntax._
 import janstenpickle.vault.core.VaultSpec
 import janstenpickle.vault.manage.Auth
 import org.scalacheck.{Gen, Prop}
@@ -23,20 +24,20 @@ class UserPassIT extends VaultSpec with ScalaCheck {
   lazy val userAdmin = janstenpickle.vault.manage.UserPass(config)
 
   def setupClient(client: String) = authAdmin.enable("userpass", Some(client))
-    .attemptRun(_.getMessage()) must beOk
+    .attemptRun must beRight
 
   def setupUser(username: String, password: String, client: String) =
     userAdmin.create(username, password, 30, None, client)
-    .attemptRun(_.getMessage())
+      .attemptRun
 
   def removeClient(client: String) =
-    authAdmin.disable(client).attemptRun(_.getMessage()) must beOk
+    authAdmin.disable(client).attemptRun must beRight
 
   def authPass = test((username, password, client, ttl) =>
                         setupClient(client) and
-    (setupUser(username, password, client) must beOk) and
+    (setupUser(username, password, client) must beRight) and
     (underTest.authenticate(username, password, ttl, client)
-    .attemptRun(_.getMessage()) must beOk) and
+    .attemptRun must beRight) and
     removeClient(client)
   )
 
@@ -45,27 +46,27 @@ class UserPassIT extends VaultSpec with ScalaCheck {
   def badClient = test{ (username, password, client, ttl) =>
     val badClientName = "nic-kim-cage-client"
     setupClient(badClientName) and
-    (setupUser(username, password, client) must beFail) and
+    (setupUser(username, password, client) must beLeft) and
     (underTest.authenticate(username, password, ttl, client)
-    .attemptRun(_.getMessage()) must beFail) and
+    .attemptRun must beLeft) and
     removeClient(badClientName)
   }
 
   def badUser = test{ (username, password, client, ttl) =>
     val badUserName = "nic-kim-cage-user"
     setupClient(client) and
-    (setupUser(username, password, client) must beOk) and
+    (setupUser(username, password, client) must beRight) and
     (underTest.authenticate(badUserName, password, ttl, client)
-    .attemptRun(_.getMessage()) must beFail) and
+    .attemptRun must beLeft) and
     removeClient(client)
   }
 
   def badPassword = test{ (username, password, client, ttl) =>
     val badPasswordValue = "nic-kim-cage-password"
     setupClient(client) and
-    (setupUser(username, password, client) must beOk) and
+    (setupUser(username, password, client) must beRight) and
     (underTest.authenticate(username, badPasswordValue, ttl, client)
-    .attemptRun(_.getMessage()) must beFail) and
+    .attemptRun must beLeft) and
     removeClient(client)
   }
 

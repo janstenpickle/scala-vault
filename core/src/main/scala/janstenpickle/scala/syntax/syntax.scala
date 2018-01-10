@@ -1,21 +1,19 @@
 package janstenpickle.scala.syntax
 
+import cats.data.EitherT
 import com.ning.http.client.Response
 import dispatch.{Http, Req}
 import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
 import janstenpickle.vault.core.VaultConfig
-import uscala.concurrent.result.AsyncResult
-import uscala.result.Result
+import janstenpickle.scala.result._
+import cats.implicits._
+import scala.concurrent.duration._
 
-import scala.concurrent.{ExecutionContext, Future}
-
-object ConversionSyntax {
-  implicit def toResult[A, B](xor: Either[A, B]): Result[A, B] = xor.fold(
-    Result.fail, Result.ok
-  )
-}
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.language.postfixOps
+import scala.util.control.NonFatal
 
 object OptionSyntax {
   implicit class ToTuple[T](opt: Option[T]) {
@@ -25,91 +23,128 @@ object OptionSyntax {
 }
 
 object AsyncResultSyntax {
+
   implicit class FutureToAsyncResult[T](future: Future[T])
   (implicit ec: ExecutionContext) {
-    def toAsyncResult: AsyncResult[String, T] = AsyncResult(
-      future.map(Result.ok)
-    )
+    def toAsyncResult: AsyncResult[T] = {
+      future.map(Result.pure[T]).recover {
+        case NonFatal(e) => Result.fail[T](f = e.getMessage)
+      }
+    }
+  }
+
+  implicit class AsyncResultOps[R](f: AsyncResult[R]) {
+    def eiT: AsyncEitherT[R] = EitherT[Future, String, R](f)
+
+    def attemptRun(implicit ec: ExecutionContext): Result[R] =
+      Await.result(f, 1 minute)
+  }
+
+  implicit class AsyncResultOpsEitherT[R](f: Either[String, R]) {
+    def eiT(implicit ec: ExecutionContext): AsyncEitherT[R] =
+      EitherT.fromEither[Future](f)
+  }
+
+  implicit class AsyncResultOpsAny[R](r: R) {
+    def eiT: AsyncEitherT[R] =
+      EitherT.apply(Future.successful(Either right r))
   }
 
   implicit class ReqToAsyncResult(req: Req)
   (implicit ec: ExecutionContext) {
-    def toAsyncResult: AsyncResult[String, Response] = Http(req).toAsyncResult
+    def toAsyncResult: AsyncResult[Response] = Http(req).toAsyncResult
   }
 
   implicit def toAsyncResult[T](future: scala.concurrent.Future[T])
-  (implicit ec: ExecutionContext): AsyncResult[String, T] =
+  (implicit ec: ExecutionContext): AsyncResult[T] =
     future.toAsyncResult
 }
 
 object VaultConfigSyntax {
+  import AsyncResultSyntax._
 
   final val VaultTokenHeader = "X-Vault-Token"
 
   implicit class RequestHelper(config: VaultConfig) {
     def authenticatedRequest(path: String)(req: Req => Req)
-    (implicit ec: ExecutionContext): AsyncResult[String, Req] =
-      config.token.map[Req](token =>
-        req(config.wsClient.path(path).setHeader(VaultTokenHeader, token))
-      )
+    (implicit ec: ExecutionContext): AsyncResult[Req] ={
+      val r = for {
+        token <- config.token.eiT
+      } yield req(config.wsClient.path(path).setHeader(VaultTokenHeader, token))
+      r.value
+    }
   }
 }
 
 object JsonSyntax {
-  import ConversionSyntax._
+  import AsyncResultSyntax._
 
-  implicit class JsonHandler(json: AsyncResult[String, Json]) {
-    def extractFromJson[T](jsonPath: HCursor => ACursor = _.downArray)
-    (
+  implicit class JsonHandler(json: AsyncResult[Json]) {
+    def extractFromJson[T](jsonPath: HCursor => ACursor = _.downArray)(
       implicit decode: Decoder[T],
       ec: ExecutionContext
-    ): AsyncResult[String, T] =
-      json.flatMapR(j => decode.tryDecode(
-        jsonPath(j.hcursor)
-      ).leftMap(_.message))
+    ): AsyncResult[T] = {
+      val r = for {
+        j <- json.eiT
+        e <- decode.tryDecode(jsonPath(j.hcursor)).leftMap(_.message).eiT
+      } yield e
+      r.value
+    }
+
   }
 }
 
 object ResponseSyntax {
-  import ConversionSyntax._
+  import AsyncResultSyntax._
   import JsonSyntax._
 
-  implicit class ResponseHandler(resp: AsyncResult[String, Response]) {
+  implicit class ResponseHandler(resp: AsyncResult[Response]) {
     def acceptStatusCodes(codes: Int*)
-    (implicit ec: ExecutionContext): AsyncResult[String, Response] =
-      resp.flatMapR(
-        response =>
-          if (codes.contains(response.getStatusCode)) {
-            Result.ok(response)
-          }
-          else {
-            Result.fail(
-              s"Received failure response from server:" +
-              s" ${response.getStatusCode}\n ${response.getResponseBody}"
-            )
-          }
-      )
+    (implicit ec: ExecutionContext): AsyncResult[Response] = {
+      val r = for {
+        response <- resp.eiT
+        r <- Result.cond(
+          test = codes.contains(response.getStatusCode),
+          right = response,
+          left = s"Received failure response from server:" +
+            s" ${response.getStatusCode}\n ${response.getResponseBody}"
+        ).eiT
+      } yield r
+      r.value
+    }
 
-    def extractJson(implicit ec: ExecutionContext): AsyncResult[String, Json] =
-      resp.flatMapR(response =>
-        parse(response.getResponseBody).leftMap(_.message)
-      )
+    def extractJson(implicit ec: ExecutionContext):
+      AsyncResult[Json] = {
+      val r = for {
+        response <- resp.eiT
+        r <- parse(response.getResponseBody).leftMap(_.message).eiT
+      } yield r
+      r.value
+    }
+
 
     def extractFromJson[T](jsonPath: HCursor => ACursor = _.downArray)
     (
       implicit decode: Decoder[T],
       ec: ExecutionContext
-    ): AsyncResult[String, T] =
+    ): AsyncResult[T] =
       resp.extractJson.extractFromJson[T](jsonPath)
   }
 }
 
 object SyntaxRequest {
+  import AsyncResultSyntax._
 
-  implicit class ExecuteRequest(req: AsyncResult[String, Req])
+  implicit class ExecuteRequest(req: AsyncResult[Req])
   (implicit ec: ExecutionContext) {
-    def execute: AsyncResult[String, Response] =
-      req.flatMapF(Http(_))
+    def execute: AsyncResult[Response] = {
+      val r = for {
+        request <- req.eiT
+        response <- Http(request).toAsyncResult.eiT
+      } yield response
+      r.value
+    }
+
   }
 
   implicit class HttpOps(req: Req) {
