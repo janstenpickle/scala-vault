@@ -7,7 +7,7 @@ lazy val scalaVersion212 = "2.12.4"
 
 lazy val specs2Version = "3.8.8"
 lazy val catsVersion = "1.0.1"
-lazy val circeVersion = "0.9.0-M3"
+lazy val circeVersion = "0.9.0"
 lazy val dispatchVersion = "0.11.3"
 lazy val startVaultTask = TaskKey[Unit](
   "startVaultTask",
