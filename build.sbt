@@ -1,11 +1,12 @@
 import sbt.Keys._
+import org.scalastyle.sbt.ScalastylePlugin.autoImport._
 
 name := "vault"
 
 lazy val uscalaVersion = "0.5.1"
 lazy val specs2Version = "3.8.8"
 lazy val circeVersion = "0.7.0"
-lazy val dispatchVersion = "0.11.3"
+lazy val dispatchVersion = "0.12.0"
 lazy val startVaultTask = TaskKey[Unit](
   "startVaultTask",
   "Start dev vault server for integration test"
@@ -38,7 +39,8 @@ val pomInfo = (
 
 lazy val commonSettings = Seq(
   version := "0.4.2-SNAPSHOT",
-  scalaVersion := "2.11.11",
+  scalaVersion := "2.11.12",
+  crossScalaVersions := Seq("2.11.12", "2.12.5"),
   organization := "janstenpickle.vault",
   pomExtra := pomInfo,
   autoAPIMappings := true,
@@ -90,8 +92,7 @@ lazy val commonSettings = Seq(
   unmanagedSourceDirectories in IntegrationTest += baseDirectory.value /
   "test" / "scala",
   // check style settings
-  checkStyleBeforeCompile :=
-  org.scalastyle.sbt.ScalastylePlugin.scalastyle.in(Compile).toTask("").value,
+  checkStyleBeforeCompile := scalastyle.in(Compile).toTask("").value,
   (compile in Compile) := (
     (compile in Compile) dependsOn
     checkStyleBeforeCompile

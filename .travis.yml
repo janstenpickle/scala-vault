@@ -19,6 +19,6 @@ before_install:
   - bash scripts/start_vault
 
 script:
-  - sbt scalastyle
-  - sbt test
-  - sbt it:test
+  - sbt +scalastyle
+  - sbt +test
+  - sbt +it:test

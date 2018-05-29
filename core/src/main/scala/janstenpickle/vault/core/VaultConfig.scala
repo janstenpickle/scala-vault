@@ -48,8 +48,7 @@ object VaultConfig {
       )
     )
 
-  def apply(wsClient: WSClient, token: String)
-  (implicit ec: ExecutionContext): VaultConfig =
+  def apply(wsClient: WSClient, token: String): VaultConfig =
     VaultConfig(wsClient, AsyncResult.ok[String, String](token))
 }
 
