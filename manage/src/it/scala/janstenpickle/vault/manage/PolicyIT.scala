@@ -4,7 +4,6 @@ import janstenpickle.vault.core.VaultSpec
 import janstenpickle.vault.manage.Model.Rule
 import org.scalacheck.{Gen, Prop}
 import org.specs2.ScalaCheck
-import uscala.result.Result
 
 class PolicyIT extends VaultSpec with ScalaCheck {
   import PolicyIT._
